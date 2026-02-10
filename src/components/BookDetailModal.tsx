@@ -98,15 +98,20 @@ export function BookDetailModal({ book, open, onOpenChange }: BookDetailModalPro
         {book.images && book.images.length > 0 && (
           <div className="mt-6 border-t border-border pt-6">
             <h4 className="font-display text-lg text-foreground mb-4">{t.books.relatedImages}</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-5">
               {book.images.map((img, i) => (
-                <div key={i} className="space-y-2">
+                <div
+                  key={i}
+                  className="flex flex-col sm:flex-row gap-4 rounded-xl bg-muted/40 border border-border p-3"
+                >
                   <img
                     src={img.src}
                     alt={img.caption[lang]}
-                    className="w-full rounded-lg shadow object-cover aspect-[4/3]"
+                    className="w-full sm:w-40 md:w-48 rounded-lg shadow object-cover aspect-[4/3] flex-shrink-0"
                   />
-                  <p className="text-xs text-muted-foreground text-center">{img.caption[lang]}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed self-center">
+                    {img.caption[lang]}
+                  </p>
                 </div>
               ))}
             </div>
