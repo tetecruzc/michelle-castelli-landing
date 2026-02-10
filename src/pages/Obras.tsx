@@ -4,11 +4,13 @@ import { Search, ArrowLeft } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { BookDetailModal } from '@/components/BookDetailModal';
-import { books, type Book } from '@/data/books';
+import { useBooks } from '@/hooks/useBooks';
+import type { Book } from '@/data/books';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 const Obras = () => {
   const { lang, t } = useLanguage();
+  const { books } = useBooks();
   const [search, setSearch] = useState('');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 

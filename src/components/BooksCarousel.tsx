@@ -1,15 +1,17 @@
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { books as allBooks, type Book } from '@/data/books';
+import { useBooks } from '@/hooks/useBooks';
+import type { Book } from '@/data/books';
 import { BookDetailModal } from '@/components/BookDetailModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 const featuredIds = ['autobiografia', 'fiabe', 'tesoro-sfumato', 'diaspora-es', 'diaspora-pt'];
-const carouselBooks = allBooks.filter((b) => featuredIds.includes(b.id));
 
 export function BooksCarousel() {
   const { lang, t } = useLanguage();
+  const { books: allBooks } = useBooks();
+  const carouselBooks = allBooks.filter((b) => featuredIds.includes(b.id));
   const [startIndex, setStartIndex] = useState(0);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const visibleCount = 4;

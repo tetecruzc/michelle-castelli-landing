@@ -1,5 +1,5 @@
-import bookDiaspora from '@/assets/book-diaspora.jpg';
 import bookAutobiografia from '@/assets/book-autobiografia.jpg';
+import bookDiaspora from '@/assets/book-diaspora.jpg';
 import bookFiabe from '@/assets/book-fiabe.jpg';
 
 export type BookAction = 'buy' | 'download' | 'not-digitized';
@@ -22,6 +22,34 @@ export interface Book {
   };
   downloadUrl?: string;
   images?: BookImage[];
+}
+
+/** Fila de la tabla `books` en Supabase */
+export interface BookRow {
+  id: string;
+  title: { es: string; it: string };
+  description: { es: string; it: string };
+  cover_url: string;
+  year: number;
+  action: BookAction;
+  buy_links?: { ves?: string; usd?: string } | null;
+  download_url?: string | null;
+  images?: BookImage[] | null;
+}
+
+/** Convierte una fila de Supabase en el tipo Book de la app */
+export function mapBookRowToBook(row: BookRow): Book {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    cover: row.cover_url,
+    year: row.year,
+    action: row.action,
+    buyLinks: row.buy_links ?? undefined,
+    downloadUrl: row.download_url ?? undefined,
+    images: row.images ?? undefined,
+  };
 }
 
 export const books: Book[] = [
@@ -173,5 +201,5 @@ export const books: Book[] = [
     cover: bookFiabe,
     year: 1995,
     action: 'not-digitized',
-  },
+  }
 ];

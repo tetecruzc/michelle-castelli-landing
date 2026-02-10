@@ -1,4 +1,5 @@
- import { Facebook, Twitter, Mail } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Facebook, Twitter, Mail } from 'lucide-react';
  
  export function Footer() {
    return (
@@ -38,10 +39,18 @@
          {/* Divider */}
          <div className="w-full max-w-4xl mx-auto h-px bg-white/20 mb-8" />
  
-         {/* Copyright */}
-         <p className="text-center text-white/50 text-sm italic">
-           © Michele Castelli {new Date().getFullYear()}
-         </p>
+        {/* Copyright */}
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-center text-white/50 text-sm italic">
+            © Michele Castelli {new Date().getFullYear()}
+          </p>
+          <Link
+            to="/autor"
+            className="text-white/40 hover:text-white/60 text-xs transition-colors"
+          >
+            Panel del autor
+          </Link>
+        </div>
        </div>
      </footer>
    );

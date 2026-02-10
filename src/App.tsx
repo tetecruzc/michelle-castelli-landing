@@ -4,8 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/i18n/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Obras from "./pages/Obras";
+import Autor from "./pages/Autor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -13,17 +15,20 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/obras" element={<Obras />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/obras" element={<Obras />} />
+              <Route path="/autor" element={<Autor />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
 );
