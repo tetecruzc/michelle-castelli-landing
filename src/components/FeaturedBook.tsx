@@ -19,12 +19,12 @@ export function FeaturedBook() {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Spanish */}
-          <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-card rounded-lg shadow-lg p-6 flex gap-6">
-            <img src={bookDiaspora} alt="Diáspora - Español" className="w-36 h-auto rounded shadow-md flex-shrink-0 object-cover" />
-            <div className="flex flex-col">
+          <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-card rounded-lg shadow-lg p-5 sm:p-6 flex flex-col sm:flex-row gap-5 sm:gap-6">
+            <img src={bookDiaspora} alt="Diáspora - Español" className="w-28 sm:w-36 h-auto rounded shadow-md flex-shrink-0 object-cover mx-auto sm:mx-0" />
+            <div className="flex flex-col text-center sm:text-left">
               <h3 className="font-display text-xl mb-1">{t.featured.spanishVersion}</h3>
               <p className="text-sm text-muted-foreground mb-3">{t.featured.spanishSubtitle}</p>
-              <div className="flex gap-0.5 mb-4">
+              <div className="flex gap-0.5 mb-4 justify-center sm:justify-start">
                 {[...Array(5)].map((_, i) => <Star key={i} size={16} className="fill-primary text-primary" />)}
               </div>
               <p className="text-sm text-muted-foreground mb-6 flex-grow line-clamp-4">{t.featured.spanishDesc}</p>
@@ -34,12 +34,12 @@ export function FeaturedBook() {
           </motion.div>
 
           {/* Portuguese */}
-          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-card rounded-lg shadow-lg p-6 flex gap-6">
-            <img src={bookDiaspora} alt="Diáspora - Português" className="w-36 h-auto rounded shadow-md flex-shrink-0 object-cover" />
-            <div className="flex flex-col">
+          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-card rounded-lg shadow-lg p-5 sm:p-6 flex flex-col sm:flex-row gap-5 sm:gap-6">
+            <img src={bookDiaspora} alt="Diáspora - Português" className="w-28 sm:w-36 h-auto rounded shadow-md flex-shrink-0 object-cover mx-auto sm:mx-0" />
+            <div className="flex flex-col text-center sm:text-left">
               <h3 className="font-display text-xl mb-1">{t.featured.portugueseVersion}</h3>
               <p className="text-sm text-muted-foreground mb-3">{t.featured.portugueseSubtitle}</p>
-              <div className="flex gap-0.5 mb-4">
+              <div className="flex gap-0.5 mb-4 justify-center sm:justify-start">
                 {[...Array(5)].map((_, i) => <Star key={i} size={16} className="fill-primary text-primary" />)}
               </div>
               <p className="text-sm text-muted-foreground mb-6 flex-grow line-clamp-4">{t.featured.portugueseDesc}</p>

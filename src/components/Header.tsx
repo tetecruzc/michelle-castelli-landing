@@ -100,15 +100,15 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-t border-border"
+            className="md:hidden bg-hero/95 backdrop-blur-md border-t border-white/10"
           >
-            <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
+            <nav className="container mx-auto px-6 py-6 flex flex-col gap-6">
               {navItems.map((item) => (
                 <a
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="nav-link text-foreground/80 py-2"
+                  className="nav-link text-white/80 py-1 text-base"
                 >
                   {item.label}
                 </a>
