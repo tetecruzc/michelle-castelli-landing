@@ -47,7 +47,11 @@ async function fetchBooksFromSupabase(): Promise<Book[]> {
   const rows = (data as unknown as BookRow[]) ?? [];
   if (rows.length === 0) return localBooks;
   const resolved = await resolveCoverUrls(rows);
-  return resolved.map(mapBookRowToBook);
+  // Preserve the original storage path so the admin form can reuse it on edit.
+  return resolved.map((row, idx) => ({
+    ...mapBookRowToBook(row),
+    coverPath: rows[idx].cover_url,
+  }));
 }
 
 export function useBooks() {

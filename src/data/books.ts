@@ -14,6 +14,8 @@ export interface Book {
   title: { es: string; it: string };
   description: { es: string; it: string };
   cover: string;
+  /** Storage path inside the `book-covers` bucket, if uploaded via the panel. */
+  coverPath?: string;
   year: number;
   action: BookAction;
   buyLinks?: {
@@ -44,6 +46,7 @@ export function mapBookRowToBook(row: BookRow): Book {
     title: row.title,
     description: row.description,
     cover: row.cover_url,
+    coverPath: row.cover_url,
     year: row.year,
     action: row.action,
     buyLinks: row.buy_links ?? undefined,
