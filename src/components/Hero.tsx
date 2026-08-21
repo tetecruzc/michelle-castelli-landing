@@ -1,17 +1,17 @@
 import { motion } from 'framer-motion';
-import heroBg from '@/assets/hero-bg.jpg';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function Hero() {
   const { t } = useLanguage();
 
   return (
-    <section id="inicio" className="relative min-h-screen flex items-center justify-start overflow-hidden">
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroBg})` }}>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+    <section id="inicio" className="relative min-h-screen flex items-center justify-start overflow-hidden bg-black">
+      <div className="absolute right-0 bottom-0 w-full h-full md:w-1/2 flex justify-end items-end pointer-events-none">
+        <img src="/michele-castelli-banner.png" alt="Michele Castelli" className="max-h-full object-contain opacity-50 md:opacity-100" />
       </div>
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent md:hidden pointer-events-none" />
 
-      <div className="relative container mx-auto px-6 py-32">
+      <div className="relative z-10 container mx-auto px-6 py-32">
         <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.3 }} className="max-w-2xl">
           <h1 className="font-display text-5xl md:text-7xl text-white tracking-wider mb-6">Michele Castelli</h1>
           <div className="flex items-center gap-4 mb-8">

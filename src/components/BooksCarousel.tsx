@@ -25,8 +25,10 @@ export function BooksCarousel() {
   };
 
   const visibleBooks = [];
-  for (let i = 0; i < visibleCount; i++) {
-    visibleBooks.push(carouselBooks[(startIndex + i) % carouselBooks.length]);
+  if (carouselBooks.length > 0) {
+    for (let i = 0; i < visibleCount; i++) {
+      visibleBooks.push(carouselBooks[(startIndex + i) % carouselBooks.length]);
+    }
   }
 
   return (
