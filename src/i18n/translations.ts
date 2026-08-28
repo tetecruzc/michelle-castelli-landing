@@ -43,6 +43,9 @@ export const translations = {
       title: 'Entrevista RAI TG Molise en ocasión de recibir la honorificencia de Embajador de "Molisanos" en el mundo',
       description: 'Descubre más sobre la trayectoria, las obras y la visión literaria de Michele Castelli a través de sus apariciones en televisión y entrevistas especiales.',
       cta: 'Ver Entrevistas',
+      pageTitle: 'Entrevistas y medios',
+      pageSubtitle: 'Apariciones en televisión, conferencias y reportajes especiales.',
+      readMore: 'Leer artículo completo',
     },
     contact: {
       title: 'Envíame un mensaje',
@@ -54,7 +57,7 @@ export const translations = {
     books: {
       searchPlaceholder: 'Buscar por título...',
       allBooks: 'Todos los libros',
-      title: 'Obras',
+      title: 'Mis obras',
       subtitle: 'Catálogo completo de publicaciones',
       buy: 'Comprar',
       download: 'Descargar',
@@ -109,6 +112,9 @@ export const translations = {
       title: 'Intervista RAI TG Molise in occasione di ricevere l\'onorificenza di Ambasciatore dei "Molisani" nel mondo',
       description: 'Scopri di più sulla traiettoria, le opere e la visione letteraria di Michele Castelli attraverso le sue apparizioni televisive e interviste speciali.',
       cta: 'Guarda Interviste',
+      pageTitle: 'Interviste e Media',
+      pageSubtitle: 'Apparizioni televisive, conferenze e reportage speciali.',
+      readMore: 'Leggi l\'articolo completo',
     },
     contact: {
       title: 'Inviami un messaggio',

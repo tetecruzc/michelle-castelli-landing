@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Obras from "./pages/Obras";
 import Autor from "./pages/Autor";
+import Entrevistas from "./pages/Entrevistas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/obras" element={<Obras />} />
               <Route path="/autor" element={<Autor />} />
+              <Route path="/entrevistas" element={<Entrevistas />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
