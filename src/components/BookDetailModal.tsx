@@ -18,7 +18,7 @@ export function BookDetailModal({ book, open, onOpenChange }: BookDetailModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl w-[95vw] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl md:text-3xl text-primary">
             {book.title[lang]}
@@ -28,12 +28,12 @@ export function BookDetailModal({ book, open, onOpenChange }: BookDetailModalPro
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-[200px_1fr] gap-6 mt-4">
+        <div className="flex flex-col sm:grid sm:grid-cols-[180px_1fr] gap-6 mt-4">
           {/* Cover */}
           <img
             src={book.cover}
             alt={book.title[lang]}
-            className="w-full rounded-lg shadow-lg object-cover aspect-[2/3]"
+            className="w-32 sm:w-full mx-auto sm:mx-0 rounded-lg shadow-lg object-cover aspect-[2/3]"
           />
 
           {/* Info */}
@@ -98,15 +98,20 @@ export function BookDetailModal({ book, open, onOpenChange }: BookDetailModalPro
         {book.images && book.images.length > 0 && (
           <div className="mt-6 border-t border-border pt-6">
             <h4 className="font-display text-lg text-foreground mb-4">{t.books.relatedImages}</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className={`grid gap-4 ${book.images.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
               {book.images.map((img, i) => (
-                <div key={i} className="space-y-2">
+                <div
+                  key={i}
+                  className="rounded-xl bg-muted/40 border border-border overflow-hidden"
+                >
                   <img
                     src={img.src}
                     alt={img.caption[lang]}
-                    className="w-full rounded-lg shadow object-cover aspect-[4/3]"
+                    className="w-full object-cover aspect-[16/10]"
                   />
-                  <p className="text-xs text-muted-foreground text-center">{img.caption[lang]}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed p-3">
+                    {img.caption[lang]}
+                  </p>
                 </div>
               ))}
             </div>

@@ -97,10 +97,12 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
         .from(BOOK_COVERS_BUCKET)
         .upload(path, coverFile, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from(BOOK_COVERS_BUCKET).getPublicUrl(path);
-      return data.publicUrl;
+      // Bucket is private; store only the storage path. useBooks signs URLs at read time.
+      return path;
     }
-    if (isEdit && book?.cover) return book.cover;
+    if (isEdit && (book?.coverPath || book?.cover)) {
+      return book.coverPath ?? book.cover;
+    }
     throw new Error('Sube una portada para el libro.');
   };
 
@@ -164,11 +166,12 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
         images: book?.images ?? null,
       };
 
+      const dbRow = row as unknown as never;
       if (isEdit) {
-        const { error: updateError } = await supabase.from('books').update(row).eq('id', book.id);
+        const { error: updateError } = await supabase.from('books').update(dbRow).eq('id', book.id);
         if (updateError) throw updateError;
       } else {
-        const { error: insertError } = await supabase.from('books').insert(row);
+        const { error: insertError } = await supabase.from('books').insert(dbRow);
         if (insertError) throw insertError;
       }
       onSuccess();
