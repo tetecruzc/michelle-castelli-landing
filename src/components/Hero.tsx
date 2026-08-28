@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { motion } from 'framer-motion';
 
 export function Hero() {
   const { t } = useLanguage();
 
   return (
-    <section id="inicio" className="relative min-h-screen flex items-center justify-start overflow-hidden bg-black">
+    <section id="inicio" className="relative min-h-[95vh] md:min-h-[85vh] flex items-center justify-start overflow-hidden bg-black">
       <div className="absolute right-0 bottom-0 w-full h-full md:w-1/2 flex justify-end items-end pointer-events-none">
         <img src="/michele-castelli-banner.png" alt="Michele Castelli" className="max-h-full object-contain opacity-50 md:opacity-100" />
       </div>
@@ -24,11 +24,11 @@ export function Hero() {
         </motion.div>
       </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="absolute bottom-10 left-1/2 -translate-x-1/2">
+      {/* <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="absolute bottom-10 left-1/2 -translate-x-1/2">
         <div className="flex flex-col items-center gap-2">
           <div className="w-px h-16 bg-gradient-to-b from-transparent via-white/50 to-white/20" />
         </div>
-      </motion.div>
+      </motion.div> */}
     </section>
   );
 }

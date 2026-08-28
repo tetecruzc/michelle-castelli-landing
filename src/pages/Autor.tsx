@@ -148,86 +148,127 @@ export default function Autor() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col bg-section-alt/30">
       <Header />
-      <main className="pt-28 pb-16">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      
+      {/* Dashboard Header */}
+      <div className="bg-background border-b border-border pt-32 pb-8">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
             <div>
-              <h1 className="font-display text-3xl text-primary">Panel del autor</h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Gestiona el catálogo de libros. Los cambios se reflejan en la web.
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary mb-4 text-xs font-semibold tracking-widest uppercase">
+                <BookOpen size={14} />
+                <span>Administración</span>
+              </div>
+              <h1 className="font-display text-4xl text-foreground">Panel del autor</h1>
+              <p className="text-muted-foreground mt-2 max-w-xl">
+                Gestiona tu catálogo literario. Los cambios que realices aquí se reflejarán instantáneamente en la página principal.
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => signOut()} className="gap-2">
-              <LogOut className="h-4 w-4" />
-              Cerrar sesión
-            </Button>
+            
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => signOut()} className="gap-2 shadow-sm">
+                <LogOut className="h-4 w-4" />
+                Salir
+              </Button>
+              <Button onClick={handleOpenCreate} className="gap-2 shadow-md">
+                <Plus className="h-4 w-4" />
+                Nuevo Libro
+              </Button>
+            </div>
           </div>
+        </div>
+      </div>
 
-          <div className="flex justify-end mb-6">
-            <Button onClick={handleOpenCreate} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Añadir libro
-            </Button>
-          </div>
-
+      {/* Main Content */}
+      <main className="flex-1 py-12">
+        <div className="container mx-auto px-6 max-w-7xl">
           {booksLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center py-32 opacity-50">
+              <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">Cargando catálogo...</p>
             </div>
           ) : books.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                Aún no hay libros en la base de datos. Añade el primero con el botón anterior.
-              </CardContent>
-            </Card>
+            /* Premium Empty State */
+            <div className="bg-background rounded-2xl border border-border shadow-sm p-12 text-center max-w-2xl mx-auto mt-8 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
+              <div className="mx-auto w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center mb-6">
+                <BookOpen className="h-10 w-10 text-primary opacity-80" />
+              </div>
+              <h3 className="text-2xl font-display text-foreground mb-3">Tu catálogo está vacío</h3>
+              <p className="text-muted-foreground mb-8 text-lg">
+                Comienza a construir tu biblioteca digital. Añade tu primer libro para que los lectores puedan descubrir tus obras.
+              </p>
+              <Button onClick={handleOpenCreate} size="lg" className="gap-2 shadow-md px-8">
+                <Plus className="h-5 w-5" />
+                Añadir mi primer libro
+              </Button>
+            </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            /* Books Grid */
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {books.map((book) => (
-                <Card key={book.id} className="overflow-hidden">
-                  <div className="aspect-[2/3] relative bg-muted">
+                <Card key={book.id} className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-border/50 bg-background/50 hover:bg-background">
+                  <div className="aspect-[2/3] relative bg-muted overflow-hidden">
                     <img
                       src={book.cover}
                       alt={book.title.es}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                      <Button
+                        variant="default"
+                        className="w-full gap-2 bg-white text-black hover:bg-white/90"
+                        onClick={() => handleOpenEdit(book)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Editar Libro
+                      </Button>
+                    </div>
                   </div>
-                  <CardHeader className="py-3">
-                    <h3 className="font-medium line-clamp-2">{book.title.es}</h3>
-                    <p className="text-xs text-muted-foreground">{book.year}</p>
+                  <CardHeader className="py-4 px-5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold tracking-widest text-primary mb-1">{book.year}</p>
+                        <h3 className="font-display font-medium text-lg leading-tight line-clamp-2 text-foreground group-hover:text-primary transition-colors">
+                          {book.title.es}
+                        </h3>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardFooter className="pt-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-2"
-                      onClick={() => handleOpenEdit(book)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      Editar
-                    </Button>
-                  </CardFooter>
                 </Card>
               ))}
             </div>
           )}
         </div>
       </main>
+      
       <Footer />
 
       <Dialog open={formOpen} onOpenChange={(open) => !open && handleFormCancel()}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingBook ? 'Editar libro' : 'Añadir libro'}
+        <DialogContent className="max-w-4xl p-0 overflow-hidden border-border shadow-2xl bg-background">
+          <DialogHeader className="px-8 pt-8 pb-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-2xl font-display text-foreground flex items-center gap-3">
+              {editingBook ? (
+                <>
+                  <Pencil className="h-5 w-5 text-primary" />
+                  Editar: {editingBook.title.es}
+                </>
+              ) : (
+                <>
+                  <Plus className="h-5 w-5 text-primary" />
+                  Nuevo Libro
+                </>
+              )}
             </DialogTitle>
           </DialogHeader>
-          <BookForm
-            book={editingBook}
-            onSuccess={handleFormSuccess}
-            onCancel={handleFormCancel}
-          />
+          <div className="px-8 pb-8 pt-4">
+            <BookForm
+              book={editingBook}
+              onSuccess={handleFormSuccess}
+              onCancel={handleFormCancel}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

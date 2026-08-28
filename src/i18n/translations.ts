@@ -39,7 +39,9 @@ export const translations = {
       title: 'Los más leídos',
     },
     interviews: {
+      badge: 'En los medios',
       title: 'Entrevista RAI TG Molise en ocasión de recibir la honorificencia de Embajador de "Molisanos" en el mundo',
+      description: 'Descubre más sobre la trayectoria, las obras y la visión literaria de Michele Castelli a través de sus apariciones en televisión y entrevistas especiales.',
       cta: 'Ver Entrevistas',
     },
     contact: {
@@ -103,7 +105,9 @@ export const translations = {
       title: 'I più letti',
     },
     interviews: {
+      badge: 'Nei media',
       title: 'Intervista RAI TG Molise in occasione di ricevere l\'onorificenza di Ambasciatore dei "Molisani" nel mondo',
+      description: 'Scopri di più sulla traiettoria, le opere e la visione letteraria di Michele Castelli attraverso le sue apparizioni televisive e interviste speciali.',
       cta: 'Guarda Interviste',
     },
     contact: {

@@ -1,6 +1,11 @@
-import { motion } from 'framer-motion';
-import authorPortrait from '@/assets/author-portrait.jpg';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+
+const aboutImages = [
+  '/about/michele-1.png',
+  '/about/michele-3.png'
+];
 
 const bioSections = {
   es: [
@@ -17,6 +22,14 @@ const bioSections = {
 
 export function About() {
   const { lang, t } = useLanguage();
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % aboutImages.length);
+    }, 4000); // Change image every 4 seconds
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <section id="sobre-mi" className="py-24 bg-section-alt">
@@ -28,9 +41,20 @@ export function About() {
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-16 items-start max-w-6xl mx-auto">
-          <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="relative mx-auto lg:mx-0">
-            <div className="photo-frame inline-block">
-              <img src={authorPortrait} alt="Michele Castelli" className="w-full max-w-md rounded shadow-2xl grayscale" />
+          <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="relative mx-auto lg:mx-0 w-full max-w-md aspect-[3/4]">
+            <div className="photo-frame inline-block w-full h-full relative overflow-hidden rounded shadow-2xl">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImage}
+                  src={aboutImages[currentImage]}
+                  alt={`Michele Castelli ${currentImage + 1}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8 }}
+                  className="w-full h-full object-cover object-top absolute inset-0 grayscale hover:grayscale-0 transition-all duration-700"
+                />
+              </AnimatePresence>
             </div>
           </motion.div>
 
