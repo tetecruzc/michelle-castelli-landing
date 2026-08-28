@@ -1,23 +1,23 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { Header } from '@/components/Header';
+import { BookForm } from '@/components/BookForm';
 import { Footer } from '@/components/Footer';
+import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { BookForm } from '@/components/BookForm';
-import { useBooks } from '@/hooks/useBooks';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import type { Book } from '@/data/books';
-import { Plus, Pencil, LogOut, BookOpen, Loader2 } from 'lucide-react';
+import { useBooks } from '@/hooks/useBooks';
+import { supabase } from '@/lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
+import { BookOpen, Loader2, LogOut, Pencil, Plus } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Autor() {
   const { user, loading: authLoading, signIn, signOut } = useAuth();
@@ -90,24 +90,55 @@ export default function Autor() {
 
   if (!user) {
     return (
-      <div className="min-h-screen">
-        <Header />
-        <main className="pt-28 pb-16">
-          <div className="container mx-auto px-6 max-w-sm">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Panel del autor
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Inicia sesión para gestionar los libros.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
+      <div className="min-h-screen flex flex-col md:flex-row bg-background">
+        {/* Left Panel - Visual/Quote */}
+        <div className="hidden md:flex md:w-1/2 bg-hero text-hero-foreground flex-col justify-between p-12 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/40 via-transparent to-transparent" />
+          
+          <div className="relative z-10 flex items-center gap-3 animate-fade-in-up">
+            <span className="font-display text-xl font-semibold tracking-wider uppercase">Michele Castelli</span>
+          </div>
+
+          <div className="relative z-10 max-w-md animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <div className="mb-8 opacity-90">
+              <BookOpen className="h-12 w-12 text-primary" />
+            </div>
+            <h2 className="font-display text-4xl lg:text-5xl leading-tight mb-6">
+              "Lo más bonito que hay en la vida es perdonar"
+            </h2>
+            <p className="text-lg opacity-80 font-light text-body">
+              Panel de administración exclusivo para la gestión del catálogo literario y obras publicadas.
+            </p>
+          </div>
+
+          <div className="relative z-10 text-sm opacity-60 text-body animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            &copy; {new Date().getFullYear()} Michele Castelli. Todos los derechos reservados.
+          </div>
+        </div>
+
+        {/* Right Panel - Login Form */}
+        <div className="flex-1 flex flex-col justify-center items-center p-8 md:p-12 relative bg-section-alt/30">
+          {/* Mobile Header */}
+          <div className="md:hidden absolute top-8 left-8 flex items-center gap-2">
+             <BookOpen className="h-5 w-5 text-primary" />
+             <span className="font-display text-lg font-semibold uppercase">Michele Castelli</span>
+          </div>
+
+          <div className="w-full max-w-md space-y-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <div className="text-center md:text-left">
+              <h1 className="font-display text-3xl font-bold text-foreground mb-2">Bienvenido de nuevo</h1>
+              <p className="text-muted-foreground">
+                Inicia sesión en tu cuenta de autor para continuar.
+              </p>
+            </div>
+
+            <Card className="border-border/50 shadow-2xl bg-card/60 backdrop-blur-xl">
+              <CardContent className="pt-8">
+                <form onSubmit={handleLogin} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="autor-email">Email</Label>
+                    <Label htmlFor="autor-email" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                      Correo Electrónico
+                    </Label>
                     <Input
                       id="autor-email"
                       type="email"
@@ -116,33 +147,58 @@ export default function Autor() {
                       placeholder="tu@email.com"
                       required
                       autoComplete="email"
+                      className="h-12 bg-background/80 border-border focus:ring-primary transition-all duration-300"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="autor-password">Contraseña</Label>
+                    <Label htmlFor="autor-password" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                      Contraseña
+                    </Label>
                     <Input
                       id="autor-password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
                       required
                       autoComplete="current-password"
+                      className="h-12 bg-background/80 border-border focus:ring-primary transition-all duration-300"
                     />
                   </div>
+                  
                   {loginError && (
-                    <p className="text-sm text-destructive" role="alert">
-                      {loginError}
-                    </p>
+                    <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
+                      <span className="text-sm text-destructive font-medium">
+                        {loginError}
+                      </span>
+                    </div>
                   )}
-                  <Button type="submit" className="w-full" disabled={loginSubmitting}>
-                    {loginSubmitting ? 'Entrando…' : 'Entrar'}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 text-md font-medium tracking-wide shadow-lg hover:shadow-primary/25 transition-all duration-300" 
+                    disabled={loginSubmitting}
+                  >
+                    {loginSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Entrando...
+                      </span>
+                    ) : (
+                      'Acceder al Panel'
+                    )}
                   </Button>
                 </form>
               </CardContent>
             </Card>
+
+            <div className="text-center md:text-left mt-8">
+              <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2 group">
+                <span className="group-hover:-translate-x-1 transition-transform duration-300">&larr;</span> Volver a la página principal
+              </a>
+            </div>
           </div>
-        </main>
-        <Footer />
+        </div>
       </div>
     );
   }
