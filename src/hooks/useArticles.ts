@@ -1,67 +1,68 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { mapBookRowToBook, type Book, type BookRow } from '@/data/books';
+import { mapArticleRowToArticle, type Article, type ArticleRow } from '@/data/articles';
 
-const BOOKS_QUERY_KEY = ['books'] as const;
-const BOOK_COVERS_BUCKET = 'book-covers';
+const ARTICLES_QUERY_KEY = ['articles'] as const;
+const ARTICLE_PDFS_BUCKET = 'article-pdfs';
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour
 
 function isAbsoluteUrl(value: string): boolean {
   return /^https?:\/\//i.test(value) || value.startsWith('/') || value.startsWith('data:');
 }
 
-/** Resolve cover URLs: if the row stored a storage path, create a signed URL. */
-async function resolveCoverUrls(rows: BookRow[]): Promise<BookRow[]> {
+/** Resolve PDF URLs: if the row stored a storage path, create a signed URL. */
+async function resolvePdfUrls(rows: ArticleRow[]): Promise<ArticleRow[]> {
   if (!supabase) return rows;
   const pathsToSign = rows
-    .map((r) => r.cover_url)
+    .map((r) => r.pdf_url)
     .filter((u): u is string => !!u && !isAbsoluteUrl(u));
   if (pathsToSign.length === 0) return rows;
   const { data, error } = await supabase.storage
-    .from(BOOK_COVERS_BUCKET)
+    .from(ARTICLE_PDFS_BUCKET)
     .createSignedUrls(pathsToSign, SIGNED_URL_TTL_SECONDS);
   if (error || !data) return rows;
   const pathToSigned = new Map(
     data.map((entry) => [entry.path ?? '', entry.signedUrl])
   );
   return rows.map((r) =>
-    !isAbsoluteUrl(r.cover_url)
-      ? { ...r, cover_url: pathToSigned.get(r.cover_url) || r.cover_url }
+    !isAbsoluteUrl(r.pdf_url)
+      ? { ...r, pdf_url: pathToSigned.get(r.pdf_url) || r.pdf_url }
       : r
   );
 }
 
-async function fetchBooksFromSupabase(): Promise<Book[]> {
+async function fetchArticlesFromSupabase(): Promise<Article[]> {
   const client = supabase;
   if (!client) {
     return [];
   }
   const { data, error } = await client
-    .from('books')
+    .from('articles')
     .select('*')
-    .order('year', { ascending: false });
+    .order('year', { ascending: false })
+    .order('created_at', { ascending: false });
   if (error) {
-    console.warn('Supabase books error:', error.message);
+    console.warn('Supabase articles error:', error.message);
     return [];
   }
-  const rows = (data as unknown as BookRow[]) ?? [];
+  const rows = (data as unknown as ArticleRow[]) ?? [];
   if (rows.length === 0) return [];
-  const resolved = await resolveCoverUrls(rows);
+  const resolved = await resolvePdfUrls(rows);
   // Preserve the original storage path so the admin form can reuse it on edit.
   return resolved.map((row, idx) => ({
-    ...mapBookRowToBook(row),
-    coverPath: rows[idx].cover_url,
+    ...mapArticleRowToArticle(row),
+    pdfPath: rows[idx].pdf_url,
   }));
 }
 
-export function useBooks() {
+export function useArticles() {
   const query = useQuery({
-    queryKey: BOOKS_QUERY_KEY,
-    queryFn: fetchBooksFromSupabase,
+    queryKey: ARTICLES_QUERY_KEY,
+    queryFn: fetchArticlesFromSupabase,
     staleTime: 5 * 60 * 1000,
   });
   return {
-    books: query.data ?? [],
+    articles: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

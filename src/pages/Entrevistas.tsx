@@ -1,10 +1,9 @@
 import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
-import { Card, CardContent } from '@/components/ui/card';
 import { useInterviews } from '@/hooks/useInterviews';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar, ExternalLink, Youtube } from 'lucide-react';
+import { ExternalLink, Youtube } from 'lucide-react';
 
 const Entrevistas = () => {
   const { lang, t } = useLanguage();
@@ -111,21 +110,21 @@ const Entrevistas = () => {
                           </h3>
                           
                           {/* Description */}
-                          <p className="text-muted-foreground/90 leading-relaxed mb-8 text-lg font-light">
+                          <p className="text-muted-foreground/90 leading-relaxed  text-lg font-light">
                             {interview.description[lang]}
                           </p>
 
                           {/* Link */}
                           {interview.read_more_url && (
-                            <div className="mt-auto">
+                            <div className="mt-3">
                               <a
                                 href={interview.read_more_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.15em] text-foreground hover:text-primary transition-colors group/link pb-1 border-b border-foreground/20 hover:border-primary"
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background hover:bg-primary transition-colors duration-300 uppercase tracking-widest text-xs font-semibold rounded group"
                               >
                                 <span>{t.interviews.readMore}</span>
-                                <ExternalLink className="w-3.5 h-3.5 group-hover/link:translate-x-1 group-hover/link:-translate-y-1 transition-transform" />
+                                <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                               </a>
                             </div>
                           )}

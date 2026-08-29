@@ -13,6 +13,8 @@ export function Header() {
     { label: t.nav.obras, href: '/obras' },
     { label: t.nav.sobreMi, href: '/#sobre-mi' },
     { label: t.nav.entrevistas, href: '/entrevistas' },
+    { label: t.nav.articulos, href: '/articulos' },
+    { label: t.nav.galeria, href: '/galeria' },
     { label: t.nav.contacto, href: '/#contacto' },
   ];
 

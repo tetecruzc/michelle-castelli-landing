@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Loader2, UploadCloud, BookOpen } from 'lucide-react';
+import { Loader2, UploadCloud, BookOpen, Trash2 } from 'lucide-react';
 import type { Book, BookAction, BookRow } from '@/data/books';
 import { supabase } from '@/lib/supabase';
 
@@ -67,6 +67,7 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(book?.cover ?? null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isEdit = !!book;
 
@@ -185,10 +186,29 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!book || !supabase) return;
+    if (!window.confirm(`¿Estás seguro de que quieres eliminar el libro "${book.title.es}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const { error: deleteError } = await supabase.from('books').delete().eq('id', book.id);
+      if (deleteError) throw deleteError;
+      onSuccess();
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : 'Error al eliminar.');
+      setError(msg);
+      setDeleting(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="flex h-full w-full">
+    <form onSubmit={handleSubmit} className="flex h-full w-full overflow-hidden">
       {/* Columna Izquierda: Portada y Acciones Principales (Fija) */}
-      <div className="w-2/5 max-w-[320px] bg-muted/10 border-r border-border/50 p-6 flex flex-col justify-between shrink-0">
+      <div className="w-2/5 max-w-[320px] bg-muted/10 border-r border-border/50 px-6 py-6 flex flex-col justify-between shrink-0 overflow-y-auto">
         <div className="space-y-6">
           <div className="space-y-3">
             <Label htmlFor={coverId} className="text-foreground font-semibold text-lg">Portada del Libro</Label>
@@ -383,21 +403,35 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
         </div>
 
         {/* FOOTER */}
-        <div className="p-6 border-t border-border/50 bg-background/95 backdrop-blur-md flex justify-end gap-4 shrink-0 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={saving} className="px-8 h-12 rounded-full hover:bg-muted/50 transition-colors">
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={saving} className="px-10 h-12 min-w-[180px] shadow-lg shadow-primary/25 rounded-full hover:bg-primary/90 transition-all text-base font-medium">
-            {saving ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-5 w-5 animate-spin" /> Guardando...
-              </span>
-            ) : isEdit ? (
-              'Guardar cambios'
-            ) : (
-              'Crear libro'
+        <div className="p-6 border-t border-border/50 bg-background/95 backdrop-blur-md flex justify-between items-center gap-4 shrink-0 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+          <div>
+            {isEdit && (
+              <Button type="button" variant="destructive" onClick={handleDelete} disabled={saving || deleting} className="gap-2 px-6 h-12 rounded-full transition-colors bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20">
+                {deleting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                {deleting ? 'Eliminando...' : 'Eliminar Obra'}
+              </Button>
             )}
-          </Button>
+          </div>
+          <div className="flex gap-4">
+            <Button type="button" variant="ghost" onClick={onCancel} disabled={saving || deleting} className="px-8 h-12 rounded-full hover:bg-muted/50 transition-colors">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={saving || deleting} className="px-10 h-12 min-w-[180px] shadow-lg shadow-primary/25 rounded-full hover:bg-primary/90 transition-all text-base font-medium">
+              {saving ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Guardando...
+                </span>
+              ) : isEdit ? (
+                'Guardar cambios'
+              ) : (
+                'Crear libro'
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </form>

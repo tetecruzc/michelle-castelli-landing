@@ -7,6 +7,8 @@ export const translations = {
       obras: 'Obras',
       sobreMi: 'Sobre mí',
       entrevistas: 'Entrevistas',
+      articulos: 'Artículos',
+      galeria: 'Galería',
       contacto: 'Contacto',
     },
     hero: {
@@ -58,7 +60,7 @@ export const translations = {
       searchPlaceholder: 'Buscar por título...',
       allBooks: 'Todos los libros',
       title: 'Mis obras',
-      subtitle: 'Catálogo completo de publicaciones',
+      subtitle: 'Catálogo completo de las obras de Michele Castelli',
       buy: 'Comprar',
       download: 'Descargar',
       notDigitized: 'No digitalizado',
@@ -76,6 +78,8 @@ export const translations = {
       obras: 'Opere',
       sobreMi: 'Chi sono',
       entrevistas: 'Interviste',
+      articulos: 'Articoli',
+      galeria: 'Galleria',
       contacto: 'Contatti',
     },
     hero: {
