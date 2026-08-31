@@ -1,8 +1,9 @@
+import { ArticleForm } from '@/components/ArticleForm';
 import { BookForm } from '@/components/BookForm';
 import { Footer } from '@/components/Footer';
+import { GalleryForm } from '@/components/GalleryForm';
 import { Header } from '@/components/Header';
 import { InterviewForm } from '@/components/InterviewForm';
-import { ArticleForm } from '@/components/ArticleForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
@@ -15,17 +16,94 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Article } from '@/data/articles';
 import type { Book } from '@/data/books';
 import type { Interview } from '@/data/interviews';
-import type { Article } from '@/data/articles';
-import { useBooks } from '@/hooks/useBooks';
-import { useInterviews } from '@/hooks/useInterviews';
 import { useArticles } from '@/hooks/useArticles';
+import { toggleFeaturedBook, updateBooksOrder, useBooks } from '@/hooks/useBooks';
+import { useGallery, type GalleryPhoto } from '@/hooks/useGallery';
+import { useInterviews } from '@/hooks/useInterviews';
+import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/lib/supabase';
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useQueryClient } from '@tanstack/react-query';
-import { BookOpen, GripVertical, Loader2, LogOut, Pencil, Plus, Star, Youtube, FileText, Download } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Reorder } from 'framer-motion';
+import { BookOpen, Calendar, Download, FileText, GripVertical, Loader2, LogOut, Mail, MessageSquare, Pencil, Plus, Star, Youtube } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+function SortableBookCard({ book, onEdit, onToggleFeatured }: { book: Book; onEdit: (book: Book) => void; onToggleFeatured: (book: Book) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: book.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className="overflow-hidden group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border/40 bg-card/60 backdrop-blur-md rounded-xl flex flex-col relative h-full">
+        {/* Drag handle */}
+        <div 
+          className="absolute top-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/90 backdrop-blur-sm rounded-md cursor-grab active:cursor-grabbing text-white transition-colors"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={18} />
+        </div>
+
+        {/* Featured toggle */}
+        <div className="absolute top-3 left-3 z-20">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            title="Destacar en Inicio"
+            className={`h-9 w-9 rounded-full transition-colors ${book.is_featured ? 'text-yellow-500 hover:text-yellow-600 bg-white/90 shadow-sm' : 'text-white/80 hover:bg-white/90 hover:text-yellow-500 bg-black/40 backdrop-blur-sm'}`} 
+            onClick={(e) => { e.stopPropagation(); onToggleFeatured(book); }}
+          >
+            <Star className="h-4 w-4" fill={book.is_featured ? 'currentColor' : 'none'} />
+          </Button>
+        </div>
+        
+        <div className="aspect-[2/3] relative bg-muted overflow-hidden">
+          <img
+            src={book.cover}
+            alt={book.title.es}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6 translate-y-4 group-hover:translate-y-0 pointer-events-none">
+            <Button
+              variant="default"
+              className="w-full gap-2 bg-white text-black hover:bg-gray-100 shadow-xl rounded-full h-11 font-medium transition-transform pointer-events-auto"
+              onClick={() => onEdit(book)}
+            >
+              <Pencil className="h-4 w-4" />
+              Editar Obra
+            </Button>
+          </div>
+        </div>
+        <CardHeader className="py-5 px-6 flex-1">
+          <div className="flex flex-col gap-1.5 h-full">
+            <p className="text-xs font-bold tracking-widest text-primary uppercase">{book.year}</p>
+            <h3 className="font-display font-medium text-lg leading-tight line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300">
+              {book.title.es}
+            </h3>
+          </div>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+}
 
 const getYoutubeVideoId = (url: string) => {
   if (!url) return null;
@@ -39,6 +117,8 @@ export default function Autor() {
   const { books, isLoading: booksLoading, refetch } = useBooks();
   const { interviews, loading: interviewsLoading, updateOrder, setFeaturedInterview, refresh: refetchInterviews } = useInterviews();
   const { articles, isLoading: articlesLoading, refetch: refetchArticles } = useArticles();
+  const { photos: galleryPhotos, isLoading: galleryLoading, refetch: refetchGallery } = useGallery();
+  const { messages, isLoading: messagesLoading, unreadCount, markAsRead } = useMessages();
 
   const queryClient = useQueryClient();
 
@@ -60,11 +140,53 @@ export default function Autor() {
   
   const [articleCategoryFilter, setArticleCategoryFilter] = useState<string>('todos');
 
+  const [galleryFormOpen, setGalleryFormOpen] = useState(false);
+  const [editingGalleryPhoto, setEditingGalleryPhoto] = useState<GalleryPhoto | null>(null);
+  const [galleryCategoryFilter, setGalleryCategoryFilter] = useState<number>(1);
+
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
+
   const [orderedInterviews, setOrderedInterviews] = useState<Interview[]>([]);
+  const [orderedBooks, setOrderedBooks] = useState<Book[]>([]);
   
   useEffect(() => {
     setOrderedInterviews(interviews);
   }, [interviews]);
+
+  useEffect(() => {
+    setOrderedBooks(books);
+  }, [books]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEndBooks = async (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setOrderedBooks((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        const newArray = arrayMove(items, oldIndex, newIndex);
+        
+        // Update database in background
+        const updates = newArray.map((b, idx) => ({ id: b.id, position: idx }));
+        updateBooksOrder(updates).catch(console.error);
+        
+        return newArray;
+      });
+    }
+  };
+
+  const handleToggleFeatured = async (book: Book) => {
+    try {
+      await toggleFeaturedBook(book.id, !book.is_featured);
+      refetch();
+    } catch (err) {
+      console.error('Error toggling featured:', err);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +262,27 @@ export default function Autor() {
   const handleArticleFormCancel = () => {
     setArticleFormOpen(false);
     setEditingArticle(null);
+  };
+
+  const handleOpenCreateGallery = () => {
+    setEditingGalleryPhoto(null);
+    setGalleryFormOpen(true);
+  };
+
+  const handleOpenEditGallery = (photo: GalleryPhoto) => {
+    setEditingGalleryPhoto(photo);
+    setGalleryFormOpen(true);
+  };
+
+  const handleGalleryFormSuccess = () => {
+    setGalleryFormOpen(false);
+    setEditingGalleryPhoto(null);
+    refetchGallery();
+  };
+
+  const handleGalleryFormCancel = () => {
+    setGalleryFormOpen(false);
+    setEditingGalleryPhoto(null);
   };
 
   const handleReorder = (newOrder: Interview[]) => {
@@ -291,9 +434,22 @@ export default function Autor() {
     <div className="min-h-screen flex flex-col bg-section-alt/30">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col">
         {/* Dashboard Header */}
-        <div className="relative bg-hero text-hero-foreground pt-16 overflow-hidden shadow-lg">
+        <div className="relative bg-hero text-hero-foreground pt-10 overflow-hidden shadow-lg">
           <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/50 via-transparent to-transparent" />
           <div className="container mx-auto px-6 max-w-7xl relative z-10 pb-8">
+            
+            {/* Top Bar Navigation */}
+            <div className="flex justify-end items-center gap-6 mb-8 animate-fade-in-up">
+              <a href="/" className="text-sm font-medium text-white/60 hover:text-white flex items-center gap-2 transition-colors">
+                <BookOpen className="h-4 w-4" />
+                Ir a página inicial
+              </a>
+              <button onClick={() => signOut()} className="text-sm font-medium text-white/60 hover:text-white flex items-center gap-2 transition-colors">
+                <LogOut className="h-4 w-4" />
+                Cerrar sesión
+              </button>
+            </div>
+
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
               <div className="animate-fade-in-up">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 text-primary-foreground mb-6 text-xs font-semibold tracking-widest uppercase border border-primary/30 backdrop-blur-md shadow-sm">
@@ -307,14 +463,6 @@ export default function Autor() {
               </div>
               
               <div className="flex flex-wrap items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
-                <a href="/" className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2 shadow-sm border border-white/20 text-foreground bg-white/90 hover:bg-white hover:text-black h-11 px-6 rounded-full">
-                  <BookOpen className="h-4 w-4" />
-                  Volver al Sitio
-                </a>
-                <Button variant="outline" onClick={() => signOut()} className="gap-2 shadow-sm border-white/20 text-foreground bg-white/90 hover:bg-white hover:text-black transition-all duration-300 h-11 px-6 rounded-full">
-                  <LogOut className="h-4 w-4" />
-                  Salir
-                </Button>
                 {activeTab === 'libros' ? (
                   <Button onClick={handleOpenCreate} className="gap-2 shadow-lg shadow-primary/25 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 h-11 px-6 rounded-full">
                     <Plus className="h-5 w-5" />
@@ -330,6 +478,11 @@ export default function Autor() {
                     <Plus className="h-5 w-5" />
                     Nuevo Artículo
                   </Button>
+                ) : activeTab === 'galeria' ? (
+                  <Button onClick={handleOpenCreateGallery} className="gap-2 shadow-lg shadow-primary/25 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 h-11 px-6 rounded-full">
+                    <Plus className="h-5 w-5" />
+                    Nueva Foto
+                  </Button>
                 ) : null}
               </div>
             </div>
@@ -342,6 +495,10 @@ export default function Autor() {
                 <TabsTrigger value="entrevistas" className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent data-[state=active]:shadow-none py-4 px-2 text-sm font-medium text-white/70 data-[state=active]:text-white hover:text-white transition-all">Entrevistas</TabsTrigger>
                 <TabsTrigger value="articulos" className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent data-[state=active]:shadow-none py-4 px-2 text-sm font-medium text-white/70 data-[state=active]:text-white hover:text-white transition-all">Artículos</TabsTrigger>
                 <TabsTrigger value="galeria" className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent data-[state=active]:shadow-none py-4 px-2 text-sm font-medium text-white/70 data-[state=active]:text-white hover:text-white transition-all">Galería</TabsTrigger>
+                <TabsTrigger value="mensajes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent data-[state=active]:shadow-none py-4 px-2 text-sm font-medium text-white/70 data-[state=active]:text-white hover:text-white transition-all flex items-center gap-1.5">
+                  Mensajes 
+                  {unreadCount > 0 && <span className="bg-primary text-primary-foreground text-[9px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">{unreadCount}</span>}
+                </TabsTrigger>
               </TabsList>
             </div>
           </div>
@@ -359,50 +516,28 @@ export default function Autor() {
                 </div>
               ) : books.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 px-4 text-center animate-fade-in-up">
-                  <div className="w-20 h-20 bg-background border border-border/50 rounded-2xl flex items-center justify-center mb-8 shadow-sm group hover:border-primary/30 transition-colors duration-300">
+                  <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 shadow-inner">
                     <BookOpen className="h-8 w-8 text-primary/70 group-hover:text-primary transition-colors duration-300" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-2xl font-display text-foreground mb-3">Tu catálogo está vacío</h3>
-                  <p className="text-muted-foreground mb-10 text-lg max-w-md mx-auto font-light">
-                    Aún no has añadido ninguna obra. Comienza a construir tu biblioteca digital para tus lectores.
+                  <h3 className="text-xl font-display font-medium text-foreground mb-2">No tienes obras publicadas</h3>
+                  <p className="text-muted-foreground text-sm max-w-[280px] mb-6">
+                    Añade tu primera obra para que los visitantes puedan conocer tu trabajo.
                   </p>
-                  <Button onClick={handleOpenCreate} variant="outline" className="gap-2 shadow-sm rounded-full px-8 h-12 text-base border-border hover:border-primary/50 hover:bg-primary/5 transition-all duration-300">
-                    <Plus className="h-5 w-5" />
+                  <Button variant="outline" className="border-border shadow-sm font-medium h-10" onClick={handleOpenCreate}>
+                    <Plus className="mr-2 h-4 w-4" />
                     Añadir mi primer libro
                   </Button>
                 </div>
               ) : (
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-fade-in-up">
-                  {books.map((book) => (
-                    <Card key={book.id} className="overflow-hidden group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border/40 bg-card/60 backdrop-blur-md hover:-translate-y-1.5 rounded-xl flex flex-col">
-                      <div className="aspect-[2/3] relative bg-muted overflow-hidden">
-                        <img
-                          src={book.cover}
-                          alt={book.title.es}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6 translate-y-4 group-hover:translate-y-0">
-                          <Button
-                            variant="default"
-                            className="w-full gap-2 bg-white text-black hover:bg-gray-100 shadow-xl rounded-full h-11 font-medium transition-transform active:scale-95"
-                            onClick={() => handleOpenEdit(book)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Editar Obra
-                          </Button>
-                        </div>
-                      </div>
-                      <CardHeader className="py-5 px-6 flex-1">
-                        <div className="flex flex-col gap-1.5 h-full">
-                          <p className="text-xs font-bold tracking-widest text-primary uppercase">{book.year}</p>
-                          <h3 className="font-display font-medium text-lg leading-tight line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300">
-                            {book.title.es}
-                          </h3>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))}
-                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndBooks}>
+                  <SortableContext items={orderedBooks.map(b => b.id)} strategy={rectSortingStrategy}>
+                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 animate-fade-in-up">
+                      {orderedBooks.map((book) => (
+                        <SortableBookCard key={book.id} book={book} onEdit={handleOpenEdit} onToggleFeatured={handleToggleFeatured} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </TabsContent>
 
@@ -605,19 +740,184 @@ export default function Autor() {
             </TabsContent>
 
             <TabsContent value="galeria" className="mt-0 focus-visible:outline-none">
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-6">
-                  <BookOpen className="h-8 w-8 text-muted-foreground/50" />
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <h2 className="text-2xl font-display font-bold">Gestión de Galería</h2>
+                
+                <div className="flex bg-muted/40 p-1 rounded-xl overflow-x-auto max-w-full">
+                  {[
+                    { id: 1, name: 'Homenajes' },
+                    { id: 2, name: 'Mi familia' },
+                    { id: 3, name: 'Vida universitaria' },
+                    { id: 4, name: 'Mis viajes' },
+                    { id: 5, name: 'Varios' },
+                    { id: 6, name: 'Condecoraciones' }
+                  ].map(cat => (
+                    <button 
+                      key={cat.id}
+                      onClick={() => setGalleryCategoryFilter(cat.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${galleryCategoryFilter === cat.id ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
                 </div>
-                <h3 className="text-xl font-display mb-2">Galería Próximamente</h3>
-                <p className="text-muted-foreground max-w-md">La sección de gestión de la galería está en desarrollo.</p>
               </div>
+
+              {galleryLoading ? (
+                <div className="flex flex-col items-center justify-center py-32 opacity-50">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                  <p className="text-muted-foreground animate-pulse">Cargando galería...</p>
+                </div>
+              ) : galleryPhotos.filter(p => p.category_id === galleryCategoryFilter).length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center animate-fade-in-up">
+                  <div className="w-20 h-20 bg-background border border-border/50 rounded-2xl flex items-center justify-center mb-8 shadow-sm group hover:border-primary/30 transition-colors duration-300">
+                    <FileText className="h-8 w-8 text-primary/70 group-hover:text-primary transition-colors duration-300" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-2xl font-display text-foreground mb-3">No hay fotos en esta categoría</h3>
+                  <p className="text-muted-foreground mb-10 text-lg max-w-md mx-auto font-light">
+                    Sube tus primeras fotos para enriquecer el álbum.
+                  </p>
+                  <Button onClick={handleOpenCreateGallery} variant="outline" className="gap-2 shadow-sm rounded-full px-8 h-12 text-base border-border hover:border-primary/50 hover:bg-primary/5 transition-all duration-300">
+                    <Plus className="h-5 w-5" />
+                    Añadir foto
+                  </Button>
+                </div>
+              ) : (
+                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
+                  {galleryPhotos.filter(p => p.category_id === galleryCategoryFilter).map((photo) => (
+                    <Card key={photo.id} className="break-inside-avoid relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-border/40 bg-card/60 backdrop-blur-md rounded-xl flex flex-col hover:-translate-y-1">
+                      <div className="relative">
+                        <img 
+                          src={photo.image_url} 
+                          alt="Gallery item" 
+                          className="w-full h-auto object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                           <Button 
+                             variant="secondary"
+                             size="sm"
+                             className="gap-2 shadow-xl"
+                             onClick={() => handleOpenEditGallery(photo)}
+                           >
+                             <Pencil className="h-4 w-4" />
+                             Editar Foto
+                           </Button>
+                        </div>
+                      </div>
+                      <div className="p-4 border-t border-border/40">
+                         <p className="text-sm text-foreground line-clamp-3 leading-relaxed">
+                           {photo.text}
+                         </p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="mensajes" className="mt-0 focus-visible:outline-none">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <h2 className="text-2xl font-display font-bold">Mensajes de contacto</h2>
+              </div>
+
+              {messagesLoading ? (
+                <div className="flex flex-col items-center justify-center py-32 opacity-50">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                  <p className="text-muted-foreground animate-pulse">Cargando mensajes...</p>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center animate-fade-in-up">
+                  <div className="w-20 h-20 bg-background border border-border/50 rounded-2xl flex items-center justify-center mb-8 shadow-sm group hover:border-primary/30 transition-colors duration-300">
+                    <MessageSquare className="h-8 w-8 text-primary/70 group-hover:text-primary transition-colors duration-300" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-2xl font-display text-foreground mb-3">No hay mensajes aún</h3>
+                  <p className="text-muted-foreground text-lg max-w-md mx-auto font-light">
+                    Cuando los visitantes te envíen un mensaje desde el formulario de contacto, aparecerán aquí.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-in-up">
+                  {messages.map((msg) => (
+                    <Card 
+                      key={msg.id} 
+                      onClick={() => {
+                        setSelectedMessage(msg);
+                        if (!msg.is_read) markAsRead(msg.id);
+                      }}
+                      className={`overflow-hidden group hover:shadow-xl transition-all duration-300 border-border/40 backdrop-blur-md rounded-2xl flex flex-col h-full hover:-translate-y-1 p-6 cursor-pointer relative ${!msg.is_read ? 'bg-primary/5 shadow-md border-primary/20' : 'bg-card/60'}`}
+                    >
+                      {!msg.is_read && (
+                        <div className="absolute top-4 right-4 w-2.5 h-2.5 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.8)]" />
+                      )}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1 min-w-0 pr-6">
+                          <h3 className={`font-display font-semibold text-lg truncate ${!msg.is_read ? 'text-foreground' : 'text-foreground/80'}`}>{msg.name}</h3>
+                          <div className="text-sm text-primary flex items-center gap-1.5 mt-1 truncate">
+                            <Mail className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{msg.email}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1.5 mb-4 border-b border-border/40 pb-4 shrink-0">
+                        <Calendar className="h-3.5 w-3.5 shrink-0" />
+                        {new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(msg.created_at))}
+                      </div>
+                      <div className="text-sm leading-relaxed flex-1 break-words line-clamp-3 text-muted-foreground group-hover:text-foreground/80 transition-colors">
+                        {msg.message}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </div>
         </main>
       </Tabs>
       
       <Footer />
+
+      {/* Modal for viewing message */}
+      <Dialog open={!!selectedMessage} onOpenChange={(open) => !open && setSelectedMessage(null)}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+          {selectedMessage && (
+            <>
+              <DialogHeader className="px-8 pt-8 pb-6 bg-muted/10 border-b border-border/50 shrink-0">
+                <DialogTitle className="text-2xl font-display text-foreground flex items-center gap-4">
+                  <span className="truncate">Mensaje de {selectedMessage.name}</span>
+                </DialogTitle>
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground">
+                  <a href={`mailto:${selectedMessage.email}`} className="flex items-center gap-2 text-primary hover:underline">
+                    <Mail className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{selectedMessage.email}</span>
+                  </a>
+                  <div className="hidden sm:block">&bull;</div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    {new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(selectedMessage.created_at))}
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="px-8 overflow-y-auto">
+                <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                  {selectedMessage.message}
+                </p>
+              </div>
+              <div className="p-6 bg-muted/20 border-t border-border/50 flex justify-end shrink-0">
+                <Button variant="outline" onClick={() => setSelectedMessage(null)} className="rounded-full px-6 hover:bg-muted hover:text-foreground">
+                  Cerrar
+                </Button>
+                <Button 
+                  onClick={() => window.location.href = `mailto:${selectedMessage.email}`}
+                  className="ml-3 rounded-full px-6 gap-2 border border-primary/20 shadow-sm"
+                >
+                  <Mail className="h-4 w-4" />
+                  Responder por correo
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={formOpen} onOpenChange={(open) => !open && handleFormCancel()}>
         <DialogContent className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
@@ -628,14 +928,14 @@ export default function Autor() {
                   <div className="p-2.5 bg-primary/10 rounded-xl">
                     <Pencil className="h-6 w-6 text-primary" />
                   </div>
-                  Editar: {editingBook.title.es}
+                  Editar obra
                 </>
               ) : (
                 <>
                   <div className="p-2.5 bg-primary/10 rounded-xl">
                     <Plus className="h-6 w-6 text-primary" />
                   </div>
-                  Añadir nuevo libro
+                  Añadir nueva obra
                 </>
               )}
             </DialogTitle>
@@ -708,6 +1008,18 @@ export default function Autor() {
               article={editingArticle}
               onSuccess={handleArticleFormSuccess}
               onCancel={handleArticleFormCancel}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Modal for Gallery */}
+      <Dialog open={galleryFormOpen} onOpenChange={(open) => !open && handleGalleryFormCancel()}>
+        <DialogContent className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <GalleryForm
+              photo={editingGalleryPhoto}
+              onSuccess={handleGalleryFormSuccess}
+              onCancel={handleGalleryFormCancel}
             />
           </div>
         </DialogContent>

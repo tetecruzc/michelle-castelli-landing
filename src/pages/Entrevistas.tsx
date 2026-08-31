@@ -54,7 +54,7 @@ const Entrevistas = () => {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 py-16 md:py-24">
+      <main className="flex-1 py-10 md:py-16">
         <div className="container mx-auto px-6 max-w-7xl">
           {loading ? (
              <div className="flex flex-col items-center justify-center py-32 opacity-50">

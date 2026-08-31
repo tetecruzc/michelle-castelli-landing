@@ -10,6 +10,7 @@ import Obras from "./pages/Obras";
 import Autor from "./pages/Autor";
 import Entrevistas from "./pages/Entrevistas";
 import Articulos from "./pages/Articulos";
+import Galeria from "./pages/Galeria";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
               <Route path="/autor" element={<Autor />} />
               <Route path="/entrevistas" element={<Entrevistas />} />
               <Route path="/articulos" element={<Articulos />} />
+              <Route path="/galeria" element={<Galeria />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

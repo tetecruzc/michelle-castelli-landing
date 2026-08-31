@@ -6,22 +6,25 @@ import type { Book } from '@/data/books';
 import { BookDetailModal } from '@/components/BookDetailModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-const featuredIds = ['autobiografia', 'fiabe', 'tesoro-sfumato', 'diaspora-es', 'diaspora-pt'];
-
 export function BooksCarousel() {
   const { lang, t } = useLanguage();
   const { books: allBooks } = useBooks();
-  const carouselBooks = allBooks.filter((b) => featuredIds.includes(b.id));
+  const carouselBooks = allBooks.filter((b) => b.is_featured);
   const [startIndex, setStartIndex] = useState(0);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const visibleCount = 4;
 
   const handlePrev = () => {
-    setStartIndex((prev) => (prev === 0 ? carouselBooks.length - visibleCount : prev - 1));
+    if (carouselBooks.length === 0) return;
+    setStartIndex((prev) => {
+      const step = visibleCount % carouselBooks.length;
+      return (prev - step + carouselBooks.length) % carouselBooks.length;
+    });
   };
 
   const handleNext = () => {
-    setStartIndex((prev) => (prev >= carouselBooks.length - visibleCount ? 0 : prev + 1));
+    if (carouselBooks.length === 0) return;
+    setStartIndex((prev) => (prev + visibleCount) % carouselBooks.length);
   };
 
   const visibleBooks = [];
@@ -64,7 +67,7 @@ export function BooksCarousel() {
                   className="group cursor-pointer"
                   onClick={() => setSelectedBook(book)}
                 >
-                  <div className="relative overflow-hidden rounded-lg shadow-2xl transition-transform duration-300 group-hover:scale-105">
+                  <div className="relative overflow-hidden rounded-lg shadow-2xl">
                     <img src={book.cover} alt={book.title[lang]} className="w-full aspect-[2/3] object-cover" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                   </div>

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Menu, X, Globe } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Globe, Menu, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -11,7 +11,7 @@ export function Header() {
   const navItems = [
     { label: t.nav.inicio, href: '/#inicio' },
     { label: t.nav.obras, href: '/obras' },
-    { label: t.nav.sobreMi, href: '/#sobre-mi' },
+    // { label: t.nav.sobreMi, href: '/#sobre-mi' },
     { label: t.nav.entrevistas, href: '/entrevistas' },
     { label: t.nav.articulos, href: '/articulos' },
     { label: t.nav.galeria, href: '/galeria' },

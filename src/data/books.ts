@@ -17,6 +17,8 @@ export interface Book {
   /** Storage path inside the `book-covers` bucket, if uploaded via the panel. */
   coverPath?: string;
   year: number;
+  position?: number;
+  is_featured?: boolean;
   action: BookAction;
   buyLinks?: {
     ves?: string;
@@ -24,6 +26,7 @@ export interface Book {
   };
   downloadUrl?: string;
   images?: BookImage[];
+  categories?: string[];
 }
 
 /** Fila de la tabla `books` en Supabase */
@@ -33,10 +36,13 @@ export interface BookRow {
   description: { es: string; it: string };
   cover_url: string;
   year: number;
+  position?: number;
+  is_featured?: boolean;
   action: BookAction;
   buy_links?: { ves?: string; usd?: string } | null;
   download_url?: string | null;
   images?: BookImage[] | null;
+  categories?: string[] | null;
 }
 
 /** Convierte una fila de Supabase en el tipo Book de la app */
@@ -48,10 +54,13 @@ export function mapBookRowToBook(row: BookRow): Book {
     cover: row.cover_url,
     coverPath: row.cover_url,
     year: row.year,
+    position: row.position,
+    is_featured: row.is_featured,
     action: row.action,
     buyLinks: row.buy_links ?? undefined,
     downloadUrl: row.download_url ?? undefined,
     images: row.images ?? undefined,
+    categories: row.categories ?? undefined,
   };
 }
 

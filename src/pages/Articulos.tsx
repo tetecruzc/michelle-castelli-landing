@@ -1,12 +1,12 @@
-import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { Header } from '@/components/Header';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader } from '@/components/ui/card';
 import { useArticles } from '@/hooks/useArticles';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { Loader2, FileText, Download } from 'lucide-react';
-import { Card, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Download, FileText, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Articulos() {
   const { articles, isLoading } = useArticles();
@@ -16,7 +16,7 @@ export default function Articulos() {
   const filteredArticles = articles.filter(a => filter === 'todos' || a.category === filter);
 
   return (
-    <div className="min-h-screen flex flex-col bg-section-alt/30">
+    <div className="min-h-screen flex flex-col bg-muted/40">
       <Header />
       
       {/* Premium Hero Banner */}
@@ -75,7 +75,7 @@ export default function Articulos() {
         </div>
       </div>
       
-      <main className="flex-1 py-16 md:py-24">
+      <main className="flex-1 py-10 md:py-16">
         <div className="container mx-auto px-6 max-w-7xl">
 
           {isLoading ? (
@@ -110,14 +110,9 @@ export default function Articulos() {
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary to-primary/30 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                   
                   <CardHeader className="p-8 flex-1 flex flex-col items-start gap-4 relative overflow-hidden bg-gradient-to-b from-muted/30 to-transparent">
-                    <div className="absolute -top-6 -right-6 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-500 transform rotate-12 group-hover:rotate-0">
-                      <FileText className="w-40 h-40" />
-                    </div>
+
                     
                     <div className="flex items-center gap-3 w-full">
-                      <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
-                        <FileText className="h-5 w-5" />
-                      </div>
                       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         {article.year && <span className="text-primary">{article.year}</span>}
                         {article.year && <span className="opacity-50">&bull;</span>}
@@ -128,7 +123,7 @@ export default function Articulos() {
                     </div>
                     
                     <div className="flex-1 min-w-0 w-full mt-2 relative z-10">
-                      <h3 className="font-display font-medium text-2xl leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-3">
+                      <h3 className="font-display font-medium text-lg leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-3">
                         {article.title}
                       </h3>
                     </div>

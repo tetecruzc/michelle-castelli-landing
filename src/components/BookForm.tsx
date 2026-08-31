@@ -1,8 +1,7 @@
-import { useState, useId } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -11,10 +10,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { Loader2, UploadCloud, BookOpen, Trash2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import type { Book, BookAction, BookRow } from '@/data/books';
 import { supabase } from '@/lib/supabase';
+import { BookOpen, Image as ImageIcon, Loader2, Trash2, UploadCloud } from 'lucide-react';
+import { useId, useState } from 'react';
 
 const BOOK_COVERS_BUCKET = 'book-covers';
 
@@ -42,6 +42,14 @@ const defaultValues: BookFormValues = {
   download_url: '',
 };
 
+interface RelatedImageItem {
+  id: string;
+  file?: File;
+  previewUrl?: string;
+  captionEs: string;
+  captionIt: string;
+}
+
 interface BookFormProps {
   book?: Book | null;
   onSuccess: () => void;
@@ -64,17 +72,24 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
         }
       : defaultValues
   );
+  
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(book?.cover ?? null);
+  
+  const [relatedImages, setRelatedImages] = useState<RelatedImageItem[]>(() => {
+    return (book?.images || []).map(img => ({
+      id: crypto.randomUUID(),
+      previewUrl: img.src,
+      captionEs: img.caption.es,
+      captionIt: img.caption.it
+    }));
+  });
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isEdit = !!book;
 
-  const titleEsId = useId();
-  const titleItId = useId();
-  const descEsId = useId();
-  const descItId = useId();
   const yearId = useId();
   const coverId = useId();
 
@@ -98,7 +113,6 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
         .from(BOOK_COVERS_BUCKET)
         .upload(path, coverFile, { upsert: true });
       if (uploadError) throw uploadError;
-      // Bucket is private; store only the storage path. useBooks signs URLs at read time.
       return path;
     }
     if (isEdit && (book?.coverPath || book?.cover)) {
@@ -120,9 +134,8 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
       return;
     }
     
-    // Quick validation
     if (!values.title_es || !values.description_es || !values.year) {
-      setError('Por favor, completa los campos requeridos en todas las pestañas.');
+      setError('Por favor, completa los campos requeridos (Título y Descripción en Español, y Año).');
       return;
     }
 
@@ -142,16 +155,39 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
     setSaving(true);
     try {
       let coverUrl: string;
+      let finalRelatedImages: { src: string; caption: { es: string; it: string } }[] = [];
+      
       try {
         coverUrl = await uploadCover(recordId);
+        
+        finalRelatedImages = await Promise.all(
+          relatedImages.map(async (item, index) => {
+            let src = item.previewUrl || '';
+            if (item.file) {
+              const ext = item.file.name.split('.').pop() || 'jpg';
+              const path = `${recordId}-related-${index}-${Date.now()}.${ext}`;
+              const { error: uploadError } = await supabase.storage
+                .from(BOOK_COVERS_BUCKET)
+                .upload(path, item.file, { upsert: true });
+              if (uploadError) throw uploadError;
+              src = path;
+            }
+            return {
+              src,
+              caption: { es: item.captionEs.trim(), it: item.captionIt.trim() }
+            };
+          })
+        );
+        
       } catch (err: unknown) {
         const msg =
           (err as { message?: string })?.message ||
-          (err instanceof Error ? err.message : 'Error al subir la portada.');
+          (err instanceof Error ? err.message : 'Error al subir imágenes.');
         setError(msg);
         setSaving(false);
         return;
       }
+
       const row: Omit<BookRow, 'created_at' | 'updated_at'> = {
         id: recordId,
         title: { es: values.title_es.trim(), it: values.title_it.trim() },
@@ -164,15 +200,15 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
             ? { ves: values.buy_ves.trim() || undefined, usd: values.buy_usd.trim() || undefined }
             : null,
         download_url: values.action === 'download' ? values.download_url.trim() || null : null,
-        images: book?.images ?? null,
+        images: finalRelatedImages.length > 0 ? finalRelatedImages : null,
       };
 
       const dbRow = row as unknown as never;
       if (isEdit) {
-        const { error: updateError } = await supabase.from('books').update(dbRow).eq('id', book.id);
+        const { error: updateError } = await (supabase as any).from('books').update(dbRow).eq('id', book.id);
         if (updateError) throw updateError;
       } else {
-        const { error: insertError } = await supabase.from('books').insert(dbRow);
+        const { error: insertError } = await (supabase as any).from('books').insert(dbRow);
         if (insertError) throw insertError;
       }
       onSuccess();
@@ -193,7 +229,7 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
     }
     setDeleting(true);
     try {
-      const { error: deleteError } = await supabase.from('books').delete().eq('id', book.id);
+      const { error: deleteError } = await (supabase as any).from('books').delete().eq('id', book.id);
       if (deleteError) throw deleteError;
       onSuccess();
     } catch (err: unknown) {
@@ -277,68 +313,154 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
       <div className="flex-1 flex flex-col bg-background relative overflow-hidden">
         <div className="flex-1 overflow-y-auto px-10 py-8 space-y-12">
           
-          {/* SECCIÓN ESPAÑOL */}
-          <div className="space-y-6">
-            <h3 className="text-2xl font-display font-semibold flex items-center gap-3 text-foreground pb-2 border-b border-border/50">
-              <span className="text-3xl drop-shadow-sm">🇪🇸</span> Versión en Español
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Título del Libro</Label>
-                <Input
-                  value={values.title_es}
-                  onChange={(e) => setValues((v) => ({ ...v, title_es: e.target.value }))}
-                  required
-                  placeholder="Ej: El misterio de la luz..."
-                  className="h-14 text-lg bg-muted/20 focus:bg-background focus:ring-primary transition-all rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Sinopsis / Descripción</Label>
-                <Textarea
-                  value={values.description_es}
-                  onChange={(e) => setValues((v) => ({ ...v, description_es: e.target.value }))}
-                  rows={5}
-                  required
-                  placeholder="Escribe aquí la sinopsis del libro..."
-                  className="resize-none bg-muted/20 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
-                />
-              </div>
-            </div>
-          </div>
+          {/* TABS: ESPAÑOL / ITALIANO */}
+          <Tabs defaultValue="es" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/30 p-1 rounded-2xl h-14">
+              <TabsTrigger value="es" className="rounded-xl text-base data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all h-full">🇪🇸 Español</TabsTrigger>
+              <TabsTrigger value="it" className="rounded-xl text-base data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all h-full">🇮🇹 Italiano</TabsTrigger>
+            </TabsList>
 
-          {/* SECCIÓN ITALIANO */}
+            <TabsContent value="es" className="space-y-6 mt-0 animate-in fade-in slide-in-from-bottom-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Título del Libro (Español)</Label>
+                  <Input
+                    value={values.title_es}
+                    onChange={(e) => setValues((v) => ({ ...v, title_es: e.target.value }))}
+                    required
+                    placeholder="Ej: El misterio de la luz..."
+                    className="h-14 text-lg bg-muted/20 focus:bg-background focus:ring-primary transition-all rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Sinopsis / Descripción (Español)</Label>
+                  <Textarea
+                    value={values.description_es}
+                    onChange={(e) => setValues((v) => ({ ...v, description_es: e.target.value }))}
+                    rows={5}
+                    required
+                    placeholder="Escribe aquí la sinopsis del libro..."
+                    className="resize-none bg-muted/20 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="it" className="space-y-6 mt-0 animate-in fade-in slide-in-from-bottom-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Titolo (Opcional si no está traducido)</Label>
+                  <Input
+                    value={values.title_it}
+                    onChange={(e) => setValues((v) => ({ ...v, title_it: e.target.value }))}
+                    placeholder="Il mistero della luce..."
+                    className="h-14 text-lg bg-muted/20 focus:bg-background focus:ring-primary transition-all rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Descrizione</Label>
+                  <Textarea
+                    value={values.description_it}
+                    onChange={(e) => setValues((v) => ({ ...v, description_it: e.target.value }))}
+                    rows={5}
+                    placeholder="Scrivi qui la sinossi..."
+                    className="resize-none bg-muted/20 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Imágenes relacionadas */}
           <div className="space-y-6">
-            <h3 className="text-2xl font-display font-semibold flex items-center gap-3 text-foreground pb-2 border-b border-border/50">
-              <span className="text-3xl drop-shadow-sm">🇮🇹</span> Versión en Italiano
-            </h3>
+            <div className="flex items-center justify-between pb-2 border-b border-border/50">
+              <h3 className="text-2xl font-display font-semibold flex items-center gap-3 text-foreground">
+                <ImageIcon className="text-primary h-7 w-7" /> Imágenes relacionadas
+              </h3>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setRelatedImages([...relatedImages, { id: crypto.randomUUID(), captionEs: '', captionIt: '' }])}
+              >
+                Añadir Imagen
+              </Button>
+            </div>
+            
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Titolo (Opcional si no está traducido)</Label>
-                <Input
-                  value={values.title_it}
-                  onChange={(e) => setValues((v) => ({ ...v, title_it: e.target.value }))}
-                  placeholder="Il mistero della luce..."
-                  className="h-14 text-lg bg-muted/20 focus:bg-background focus:ring-primary transition-all rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Descrizione</Label>
-                <Textarea
-                  value={values.description_it}
-                  onChange={(e) => setValues((v) => ({ ...v, description_it: e.target.value }))}
-                  rows={5}
-                  placeholder="Scrivi qui la sinossi..."
-                  className="resize-none bg-muted/20 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
-                />
-              </div>
+              {relatedImages.length === 0 && (
+                <p className="text-sm text-muted-foreground italic px-2">No hay Imágenes relacionadas. Puedes añadir galerías internas del libro o fotos reales.</p>
+              )}
+              {relatedImages.map((img, index) => (
+                <Card key={img.id} className="p-4 bg-muted/10 border-border/40 relative group">
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity" 
+                    onClick={() => setRelatedImages(relatedImages.filter(i => i.id !== img.id))}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                  
+                  <div className="flex flex-col md:flex-row gap-6 mt-2">
+                    <div className="w-full md:w-40 shrink-0">
+                      <Label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-2 block">Foto</Label>
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden border-2 border-dashed border-border/50 bg-background/50 hover:bg-muted/50 transition-colors">
+                        {img.previewUrl ? (
+                          <img src={img.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground pointer-events-none">
+                            <UploadCloud size={24} className="mb-2 opacity-50" />
+                            <span className="text-xs font-medium">Subir</span>
+                          </div>
+                        )}
+                        <Input 
+                          type="file" 
+                          accept="image/*" 
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                               const arr = [...relatedImages];
+                               arr[index].file = file;
+                               arr[index].previewUrl = URL.createObjectURL(file);
+                               setRelatedImages(arr);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1 space-y-4 pt-1">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leyenda (Español)</Label>
+                        <Input 
+                          value={img.captionEs} 
+                          onChange={e => { const arr = [...relatedImages]; arr[index].captionEs = e.target.value; setRelatedImages(arr); }} 
+                          className="bg-background h-12 text-base rounded-xl" 
+                          placeholder="Ej. El autor en la presentación..." 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leyenda (Italiano)</Label>
+                        <Input 
+                          value={img.captionIt} 
+                          onChange={e => { const arr = [...relatedImages]; arr[index].captionIt = e.target.value; setRelatedImages(arr); }} 
+                          className="bg-background h-12 text-base rounded-xl" 
+                          placeholder="Es. L'autore alla presentazione..." 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
 
           {/* SECCIÓN ENLACES */}
           <div className="space-y-6">
             <h3 className="text-2xl font-display font-semibold flex items-center gap-3 text-foreground pb-2 border-b border-border/50">
-              <BookOpen className="text-primary h-7 w-7" /> Disponibilidad y Enlaces
+              <BookOpen className="text-primary h-7 w-7" /> Disponibilidad y enlaces
             </h3>
             
             <div className="space-y-4 p-6 bg-muted/10 rounded-3xl border border-border/50">
@@ -352,7 +474,7 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <SelectItem value="buy" className="py-3 text-base cursor-pointer">🛒 Para Comprar (Amazon, etc)</SelectItem>
+                    <SelectItem value="buy" className="py-3 text-base cursor-pointer">🛒 Para Comprar (Amazon/Guaybo)</SelectItem>
                     <SelectItem value="download" className="py-3 text-base cursor-pointer">⬇️ Descarga Gratuita (PDF)</SelectItem>
                     <SelectItem value="not-digitized" className="py-3 text-base cursor-pointer">📚 No Digitalizado (Edición antigua)</SelectItem>
                   </SelectContent>
@@ -362,21 +484,21 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
               {values.action === 'buy' && (
                 <div className="grid gap-5 pt-4 animate-fade-in-up">
                   <div className="space-y-2">
-                    <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Enlace de compra en Bolívares (VES)</Label>
+                    <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">1. Amazon (USD/EUR)</Label>
                     <Input
-                      value={values.buy_ves}
-                      onChange={(e) => setValues((v) => ({ ...v, buy_ves: e.target.value }))}
-                      placeholder="https://..."
+                      value={values.buy_usd}
+                      onChange={(e) => setValues((v) => ({ ...v, buy_usd: e.target.value }))}
+                      placeholder="https://amazon.com/..."
                       type="url"
                       className="bg-background h-12 rounded-xl"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Enlace de compra Internacional (Amazon)</Label>
+                    <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">2. Guaybo (VES, Zelle, Binance)</Label>
                     <Input
-                      value={values.buy_usd}
-                      onChange={(e) => setValues((v) => ({ ...v, buy_usd: e.target.value }))}
-                      placeholder="https://amazon.com/..."
+                      value={values.buy_ves}
+                      onChange={(e) => setValues((v) => ({ ...v, buy_ves: e.target.value }))}
+                      placeholder="https://..."
                       type="url"
                       className="bg-background h-12 rounded-xl"
                     />
@@ -403,7 +525,7 @@ export function BookForm({ book, onSuccess, onCancel }: BookFormProps) {
         </div>
 
         {/* FOOTER */}
-        <div className="p-6 border-t border-border/50 bg-background/95 backdrop-blur-md flex justify-between items-center gap-4 shrink-0 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+        <div className="p-6 border-t border-border/50 bg-background/95 backdrop-blur-md flex justify-between items-center gap-4 shrink-0 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] z-10 relative">
           <div>
             {isEdit && (
               <Button type="button" variant="destructive" onClick={handleDelete} disabled={saving || deleting} className="gap-2 px-6 h-12 rounded-full transition-colors bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20">

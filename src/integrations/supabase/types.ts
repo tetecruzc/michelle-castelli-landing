@@ -24,6 +24,7 @@ export type Database = {
           download_url: string | null
           id: string
           images: Json | null
+          categories: string[] | null
           title: Json
           updated_at: string
           year: number
@@ -37,6 +38,7 @@ export type Database = {
           download_url?: string | null
           id: string
           images?: Json | null
+          categories?: string[] | null
           title: Json
           updated_at?: string
           year: number
@@ -50,6 +52,7 @@ export type Database = {
           download_url?: string | null
           id?: string
           images?: Json | null
+          categories?: string[] | null
           title?: Json
           updated_at?: string
           year?: number

@@ -8,25 +8,36 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpen, Search } from 'lucide-react';
 import { useState } from 'react';
 
+const CATEGORIES = [
+  { id: 'all', label: 'Todas' },
+  { id: 'translated', label: 'Traducciones' },
+  { id: 'italian', label: 'En Italiano' },
+  { id: 'spanish', label: 'En Español' },
+  { id: 'dialecto', label: 'En Dialecto' }
+];
+
 const Obras = () => {
   const { lang, t } = useLanguage();
   const { books } = useBooks();
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
-  const filtered = books.filter((b) =>
-    b.title[lang].toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = books.filter((b) => {
+    const matchesSearch = b.title[lang].toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || (b.categories && b.categories.includes(selectedCategory));
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-section-alt/30">
       <Header />
 
       {/* Premium Hero Banner */}
-      <div className="relative bg-hero text-hero-foreground pt-36 pb-20 overflow-hidden shadow-lg">
+      <div className="relative bg-hero text-hero-foreground pt-36 overflow-hidden shadow-lg">
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/50 via-transparent to-transparent" />
         
-        <div className="container mx-auto px-6 max-w-7xl relative z-10">
+        <div className="container mx-auto px-6 max-w-7xl relative z-10 pb-16">
           {/* <a href="/" className="inline-flex items-center gap-2 text-hero-foreground/70 hover:text-white transition-all duration-300 mb-8 text-sm group">
             <span className="group-hover:-translate-x-1 transition-transform duration-300">
               <ArrowLeft size={16} />
@@ -72,10 +83,31 @@ const Obras = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Full-width Tab Bar */}
+        <div className="border-t border-white/10 bg-black/20 backdrop-blur-md relative z-10">
+          <div className="container mx-auto px-6 max-w-7xl overflow-x-auto no-scrollbar">
+            <div className="h-14 flex items-center gap-6 justify-start">
+              {CATEGORIES.map(cat => (
+                <button 
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`py-4 px-2 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-[2px] ${
+                    selectedCategory === cat.id 
+                      ? 'border-white text-white' 
+                      : 'border-transparent text-white/70 hover:text-white hover:border-white/50'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 py-16 md:py-24">
+      <main className="flex-1 py-10 md:py-16">
         <div className="container mx-auto px-6 max-w-7xl">
           {/* Books Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-12">
