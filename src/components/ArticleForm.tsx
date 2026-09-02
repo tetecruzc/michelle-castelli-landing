@@ -1,4 +1,3 @@
-import { useState, useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,11 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { Loader2, UploadCloud, FileText, Trash2 } from 'lucide-react';
 import type { Article } from '@/data/articles';
 import { supabase } from '@/lib/supabase';
+import { FileText, Loader2, Trash2, UploadCloud } from 'lucide-react';
+import { useId, useState } from 'react';
 
 const ARTICLE_PDFS_BUCKET = 'article-pdfs';
 
@@ -78,7 +76,7 @@ export function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) 
       if (uploadError) throw uploadError;
       return path;
     }
-    if (isEdit && (article?.pdfPath || article?.pdf_url)) {
+    if (isEdit && article && (article.pdfPath || article.pdf_url)) {
       return article.pdfPath ?? article.pdf_url;
     }
     throw new Error('Sube un documento PDF para el artículo.');
@@ -125,7 +123,7 @@ export function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) 
       };
 
       const { error: upsertError } = await supabase
-        .from('articles')
+        .from('articles' as any)
         .upsert(rowData);
 
       if (upsertError) throw upsertError;
@@ -151,7 +149,7 @@ export function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) 
         await supabase.storage.from(ARTICLE_PDFS_BUCKET).remove([article.pdfPath]);
       }
       const { error: deleteError } = await supabase
-        .from('articles')
+        .from('articles' as any)
         .delete()
         .eq('id', article.id);
       
@@ -178,21 +176,57 @@ export function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) 
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-            {/* Left Column: PDF Upload */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="space-y-4">
-                <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                  Documento PDF
-                  <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full normal-case tracking-normal">Requerido</span>
-                </Label>
-                
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor={titleId} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Título del Artículo</Label>
+              <Input
+                id={titleId}
+                value={values.title}
+                onChange={(e) => setValues({ ...values, title: e.target.value })}
+                placeholder="Escribe el título aquí..."
+                className="h-14 bg-background border-border/50 text-lg font-medium placeholder:font-normal focus-visible:ring-1"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <Label htmlFor={yearId} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Año</Label>
+                <Input
+                  id={yearId}
+                  type="number"
+                  value={values.year}
+                  onChange={(e) => setValues({ ...values, year: e.target.value })}
+                  placeholder="Ej. 2024"
+                  className="h-12 bg-muted/30 border-border/50 text-base"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Categoría</Label>
+                <Select
+                  value={values.category}
+                  onValueChange={(val) => setValues({ ...values, category: val })}
+                >
+                  <SelectTrigger className="h-12 bg-muted/30 border-border/50 text-base">
+                    <SelectValue placeholder="Selecciona..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="la_voce_d_italia">La voce d'Italia</SelectItem>
+                    <SelectItem value="otros">Otros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <Label className="text-foreground font-semibold flex items-center justify-between">
+                Archivo PDF del Artículo
+                <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full normal-case tracking-normal">Requerido</span>
+              </Label>
+              <div className="flex gap-2">
                 <Label 
                   htmlFor={pdfId} 
-                  className={`
-                    relative flex flex-col items-center justify-center w-full aspect-[3/4] max-h-[400px]
-                    rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden group
-                    ${pdfPreview ? 'border-primary/50 bg-primary/5' : 'border-border/60 hover:border-primary/50 hover:bg-muted/50'}
+                  className={`relative flex-1 flex items-center justify-center gap-2 h-12 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300
+                    ${pdfPreview ? 'border-primary/50 bg-primary/5 text-primary' : 'border-border/60 hover:border-primary/50 hover:bg-muted/50 text-muted-foreground'}
                   `}
                 >
                   <Input 
@@ -202,71 +236,24 @@ export function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) 
                     className="hidden" 
                     onChange={handlePdfChange} 
                   />
-                  
-                  {pdfPreview ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                      <div className="w-20 h-20 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                        <FileText className="w-10 h-10" />
-                      </div>
-                      <p className="font-medium text-foreground mb-1 line-clamp-2">{pdfFile ? pdfFile.name : 'Documento actual guardado'}</p>
-                      <p className="text-sm text-muted-foreground mt-2 px-4 py-1.5 bg-background rounded-full border border-border">Click para cambiar</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors p-6 text-center">
-                      <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                        <UploadCloud className="w-8 h-8" />
-                      </div>
-                      <span className="font-medium text-base mb-1">Subir Documento</span>
-                      <span className="text-xs opacity-70">Formato PDF (Max. 10MB)</span>
-                    </div>
-                  )}
+                  <UploadCloud size={18} className={pdfPreview ? '' : 'opacity-50'} />
+                  <span className="text-sm font-medium">
+                    {pdfFile ? 'Seleccionado' : pdfPreview ? 'Reemplazar PDF' : 'Subir PDF'}
+                  </span>
                 </Label>
-              </div>
-            </div>
-
-            {/* Right Column: Titles */}
-            <div className="lg:col-span-7 space-y-6">
-              <Card className="border-border/40 shadow-sm bg-muted/10 overflow-hidden p-6">
-                <div className="space-y-3">
-                  <Label htmlFor={titleId} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Título del Artículo</Label>
-                  <Input
-                    id={titleId}
-                    value={values.title}
-                    onChange={(e) => setValues({ ...values, title: e.target.value })}
-                    placeholder="Escribe el título aquí..."
-                    className="h-14 bg-background border-border/50 text-lg font-medium placeholder:font-normal focus-visible:ring-1"
-                  />
-                </div>
-              </Card>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <Label htmlFor={yearId} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Año</Label>
-                  <Input
-                    id={yearId}
-                    type="number"
-                    value={values.year}
-                    onChange={(e) => setValues({ ...values, year: e.target.value })}
-                    placeholder="Ej. 2024"
-                    className="h-12 bg-muted/30 border-border/50 text-base"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Categoría</Label>
-                  <Select
-                    value={values.category}
-                    onValueChange={(val) => setValues({ ...values, category: val })}
+                {(article?.pdf_url || pdfFile) && (
+                  <a
+                    href={pdfFile ? URL.createObjectURL(pdfFile) : article?.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center w-12 h-12 bg-background border border-border/60 hover:bg-muted text-primary rounded-xl shadow-sm transition-colors shrink-0"
+                    title={pdfFile ? "Ver PDF seleccionado" : "Ver PDF actual"}
                   >
-                    <SelectTrigger className="h-12 bg-muted/30 border-border/50 text-base">
-                      <SelectValue placeholder="Selecciona..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="la_voce_d_italia">La voce d'Italia</SelectItem>
-                      <SelectItem value="otros">Otros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <FileText size={18} />
+                  </a>
+                )}
               </div>
+              {pdfFile && <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1 truncate">{pdfFile.name}</p>}
             </div>
           </div>
         </form>
@@ -307,7 +294,7 @@ export function ArticleForm({ article, onSuccess, onCancel }: ArticleFormProps) 
                 Guardando
               </span>
             ) : (
-              'Guardar Artículo'
+              'Guardar'
             )}
           </Button>
         </div>

@@ -5,25 +5,34 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { useArticles } from '@/hooks/useArticles';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { motion } from 'framer-motion';
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { Download, FileText, Loader2, Search } from 'lucide-react';
 import { useState } from 'react';
+
+const normalizeText = (text: string) => {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
 
 export default function Articulos() {
   const { articles, isLoading } = useArticles();
   const { lang, t } = useLanguage();
   const [filter, setFilter] = useState<'todos' | 'la_voce_d_italia' | 'otros'>('todos');
+  const [search, setSearch] = useState('');
 
-  const filteredArticles = articles.filter(a => filter === 'todos' || a.category === filter);
+  const filteredArticles = articles.filter(a => {
+    const matchesSearch = normalizeText(a.title).includes(normalizeText(search));
+    const matchesCategory = filter === 'todos' || a.category === filter;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/40">
       <Header />
       
       {/* Premium Hero Banner */}
-      <div className="relative bg-hero text-hero-foreground pt-36 pb-20 overflow-hidden shadow-lg">
+      <div className="relative bg-hero text-hero-foreground pt-36 overflow-hidden shadow-lg">
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/50 via-transparent to-transparent" />
         
-        <div className="container mx-auto px-6 max-w-7xl relative z-10">
+        <div className="container mx-auto px-6 max-w-7xl relative z-10 pb-16">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -43,34 +52,63 @@ export default function Articulos() {
                   : 'Esplora articoli, saggi e pubblicazioni in primo piano di Michele Castelli nel corso degli anni.'}
               </p>
             </motion.div>
-            {/* Filter Tabs in Banner */}
-            <motion.div
+
+            <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="w-full lg:w-auto"
+              className="w-full lg:w-auto lg:min-w-[400px] relative group"
             >
-              <div className="flex bg-white/10 backdrop-blur-md p-1.5 rounded-2xl shadow-inner border border-white/20 overflow-x-auto">
-                <button 
-                  onClick={() => setFilter('todos')}
-                  className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${filter === 'todos' ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
-                >
-                  {lang === 'es' ? 'Todos' : 'Tutti'}
-                </button>
-                <button 
-                  onClick={() => setFilter('la_voce_d_italia')}
-                  className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${filter === 'la_voce_d_italia' ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
-                >
-                  La voce d'Italia
-                </button>
-                <button 
-                  onClick={() => setFilter('otros')}
-                  className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${filter === 'otros' ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
-                >
-                  {lang === 'es' ? 'Otros' : 'Altri'}
-                </button>
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 z-10 pointer-events-none" size={18} />
+                <input
+                  type="text"
+                  placeholder={lang === 'es' ? 'Buscar artículos...' : 'Cerca articoli...'}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-11 pr-6 py-3 rounded-full border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-primary/80 transition-all shadow-inner text-base"
+                />
               </div>
             </motion.div>
+          </div>
+        </div>
+
+        {/* Full-width Tab Bar */}
+        <div className="border-t border-white/10 bg-black/20 backdrop-blur-md relative z-10">
+          <div className="container mx-auto px-6 max-w-7xl overflow-x-auto no-scrollbar">
+            <div className="h-14 flex items-center gap-6 justify-start">
+              <button 
+                onClick={() => setFilter('todos')}
+                className={`py-4 px-2 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-[2px] ${
+                  filter === 'todos' 
+                    ? 'border-white text-white' 
+                    : 'border-transparent text-white/70 hover:text-white hover:border-white/50'
+                }`}
+              >
+                {lang === 'es' ? 'Todos' : 'Tutti'}
+              </button>
+              <button 
+                onClick={() => setFilter('la_voce_d_italia')}
+                className={`py-4 px-2 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-[2px] ${
+                  filter === 'la_voce_d_italia' 
+                    ? 'border-white text-white' 
+                    : 'border-transparent text-white/70 hover:text-white hover:border-white/50'
+                }`}
+              >
+                La voce d'Italia
+              </button>
+              <button 
+                onClick={() => setFilter('otros')}
+                className={`py-4 px-2 text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-[2px] ${
+                  filter === 'otros' 
+                    ? 'border-white text-white' 
+                    : 'border-transparent text-white/70 hover:text-white hover:border-white/50'
+                }`}
+              >
+                {lang === 'es' ? 'Otros' : 'Altri'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -109,7 +147,7 @@ export default function Articulos() {
                 >
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary to-primary/30 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                   
-                  <CardHeader className="p-8 flex-1 flex flex-col items-start gap-4 relative overflow-hidden bg-gradient-to-b from-muted/30 to-transparent">
+                  <CardHeader className="px-5 py-6 flex-1 flex flex-col items-start gap-4 relative overflow-hidden bg-gradient-to-b from-muted/30 to-transparent">
 
                     
                     <div className="flex items-center gap-3 w-full">

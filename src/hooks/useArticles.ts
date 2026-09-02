@@ -37,7 +37,7 @@ async function fetchArticlesFromSupabase(): Promise<Article[]> {
     return [];
   }
   const { data, error } = await client
-    .from('articles')
+    .from('articles' as any)
     .select('*')
     .order('year', { ascending: false })
     .order('created_at', { ascending: false });
@@ -55,6 +55,8 @@ async function fetchArticlesFromSupabase(): Promise<Article[]> {
   }));
 }
 
+const EMPTY_ARTICLES: Article[] = [];
+
 export function useArticles() {
   const query = useQuery({
     queryKey: ARTICLES_QUERY_KEY,
@@ -62,7 +64,7 @@ export function useArticles() {
     staleTime: 5 * 60 * 1000,
   });
   return {
-    articles: query.data ?? [],
+    articles: query.data ?? EMPTY_ARTICLES,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

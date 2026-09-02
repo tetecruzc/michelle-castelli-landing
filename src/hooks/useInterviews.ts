@@ -31,8 +31,9 @@ export const useInterviews = () => {
   useEffect(() => {
     fetchInterviews();
 
+    const channelId = `interviews-changes-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('interviews-changes')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'interviews' },

@@ -78,6 +78,8 @@ async function fetchBooksFromSupabase(): Promise<Book[]> {
   }));
 }
 
+const EMPTY_BOOKS: Book[] = [];
+
 export function useBooks() {
   const query = useQuery({
     queryKey: BOOKS_QUERY_KEY,
@@ -85,7 +87,7 @@ export function useBooks() {
     staleTime: 5 * 60 * 1000,
   });
   return {
-    books: query.data ?? [],
+    books: query.data ?? EMPTY_BOOKS,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

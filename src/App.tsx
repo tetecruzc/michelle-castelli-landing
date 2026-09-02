@@ -13,6 +13,8 @@ import Articulos from "./pages/Articulos";
 import Galeria from "./pages/Galeria";
 import NotFound from "./pages/NotFound";
 
+import { WelcomeModal } from "@/components/WelcomeModal";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,6 +24,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <WelcomeModal />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

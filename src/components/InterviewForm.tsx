@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import type { Interview } from '@/data/interviews';
 import { useInterviews } from '@/hooks/useInterviews';
@@ -150,70 +151,71 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
 
       {/* Columna Derecha: Formulario scrolleable */}
       <div className="flex-1 flex flex-col bg-background relative overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-10 py-8 space-y-12">
+        <div className="flex-1 overflow-y-auto px-10 pb-8 pt-3 space-y-12">
           
-          {/* SECCIÓN ESPAÑOL */}
-          <div className="space-y-6">
-            <h3 className="text-2xl font-display font-semibold flex items-center gap-3 text-foreground pb-2 border-b border-border/50">
-              <span className="text-3xl drop-shadow-sm">🇪🇸</span> Versión en Español
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Título de la entrevista</Label>
-                <Input
-                  value={values.title_es}
-                  onChange={(e) => setValues((v) => ({ ...v, title_es: e.target.value }))}
-                  required
-                  placeholder="Ej: Entrevista en RAI sobre..."
-                  className="h-14 text-lg bg-muted/20 focus:bg-background focus:ring-primary transition-all rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Descripción</Label>
-                <Textarea
-                  value={values.description_es}
-                  onChange={(e) => setValues((v) => ({ ...v, description_es: e.target.value }))}
-                  rows={4}
-                  required
-                  placeholder="Breve resumen de los temas tratados..."
-                  className="resize-none bg-muted/20 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
-                />
-              </div>
-            </div>
-          </div>
+          <Tabs defaultValue="es" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 p-1 rounded-2xl h-14 shadow-sm border border-border/30">
+              <TabsTrigger value="es" className="rounded-xl text-base data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all h-full">🇪🇸 Español</TabsTrigger>
+              <TabsTrigger value="it" className="rounded-xl text-base data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all h-full">🇮🇹 Italiano</TabsTrigger>
+            </TabsList>
 
-          {/* SECCIÓN ITALIANO */}
-          <div className="space-y-6">
-            <h3 className="text-2xl font-display font-semibold flex items-center gap-3 text-foreground pb-2 border-b border-border/50">
-              <span className="text-3xl drop-shadow-sm">🇮🇹</span> Versión en Italiano
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Titolo</Label>
-                <Input
-                  value={values.title_it}
-                  onChange={(e) => setValues((v) => ({ ...v, title_it: e.target.value }))}
-                  placeholder="Titolo dell'intervista..."
-                  className="h-14 text-lg bg-muted/20 focus:bg-background focus:ring-primary transition-all rounded-xl"
-                />
+            {/* SECCIÓN ESPAÑOL */}
+            <TabsContent value="es" className="space-y-6 mt-0 animate-in fade-in slide-in-from-bottom-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Título de la entrevista</Label>
+                  <Input
+                    value={values.title_es}
+                    onChange={(e) => setValues((v) => ({ ...v, title_es: e.target.value }))}
+                    required
+                    placeholder="Ej: Entrevista en RAI sobre..."
+                    className="h-14 text-lg bg-muted/40 border border-border/50 focus:bg-background focus:ring-primary transition-all rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Descripción</Label>
+                  <Textarea
+                    value={values.description_es}
+                    onChange={(e) => setValues((v) => ({ ...v, description_es: e.target.value }))}
+                    rows={4}
+                    required
+                    placeholder="Breve resumen de los temas tratados..."
+                    className="resize-none bg-muted/40 border border-border/50 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Descrizione</Label>
-                <Textarea
-                  value={values.description_it}
-                  onChange={(e) => setValues((v) => ({ ...v, description_it: e.target.value }))}
-                  rows={4}
-                  placeholder="Breve riassunto..."
-                  className="resize-none bg-muted/20 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
-                />
+            </TabsContent>
+
+            {/* SECCIÓN ITALIANO */}
+            <TabsContent value="it" className="space-y-6 mt-0 animate-in fade-in slide-in-from-bottom-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Titolo</Label>
+                  <Input
+                    value={values.title_it}
+                    onChange={(e) => setValues((v) => ({ ...v, title_it: e.target.value }))}
+                    placeholder="Titolo dell'intervista..."
+                    className="h-14 text-lg bg-muted/40 border border-border/50 focus:bg-background focus:ring-primary transition-all rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Descrizione</Label>
+                  <Textarea
+                    value={values.description_it}
+                    onChange={(e) => setValues((v) => ({ ...v, description_it: e.target.value }))}
+                    rows={4}
+                    placeholder="Breve riassunto..."
+                    className="resize-none bg-muted/40 border border-border/50 focus:bg-background focus:ring-primary transition-all text-base p-4 rounded-xl"
+                  />
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
 
           {/* SECCIÓN ENLACES EXTRA */}
           <div className="space-y-6">
             <h3 className="text-2xl font-display font-semibold flex items-center gap-3 text-foreground pb-2 border-b border-border/50">
-              🔗 Enlace Adicional (Opcional)
+              🔗 Enlace adicional (opcional)
             </h3>
             <div className="space-y-4 p-6 bg-muted/10 rounded-3xl border border-border/50">
               <div className="space-y-2">
@@ -233,7 +235,7 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
 
         {/* FOOTER */}
         <div className="p-6 border-t border-border/50 bg-background/95 backdrop-blur-md flex justify-end gap-4 shrink-0 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={saving} className="px-8 h-12 rounded-full hover:bg-muted/50 transition-colors">
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={saving} className="px-8 h-12 rounded-full hover:bg-muted hover:text-foreground transition-colors">
             Cancelar
           </Button>
           <Button type="submit" disabled={saving} className="px-10 h-12 min-w-[180px] shadow-lg shadow-primary/25 rounded-full hover:bg-primary/90 transition-all text-base font-medium">

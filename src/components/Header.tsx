@@ -69,7 +69,7 @@ export function Header() {
             aria-label="Toggle language"
           >
             <Globe size={16} />
-            {lang === 'es' ? 'IT' : 'ES'}
+            {lang === 'es' ? 'ES' : 'IT'}
           </button>
         </nav>
 

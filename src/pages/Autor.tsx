@@ -30,7 +30,7 @@ import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordi
 import { CSS } from '@dnd-kit/utilities';
 import { useQueryClient } from '@tanstack/react-query';
 import { Reorder } from 'framer-motion';
-import { BookOpen, Calendar, Download, FileText, GripVertical, Loader2, LogOut, Mail, MessageSquare, Pencil, Plus, Star, Youtube } from 'lucide-react';
+import { BookOpen, Calendar, Download, FileText, GripVertical, ImageIcon, Loader2, LogOut, Mail, MessageSquare, Pencil, Plus, Star, Youtube } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 function SortableBookCard({ book, onEdit, onToggleFeatured }: { book: Book; onEdit: (book: Book) => void; onToggleFeatured: (book: Book) => void }) {
@@ -466,22 +466,22 @@ export default function Autor() {
                 {activeTab === 'libros' ? (
                   <Button onClick={handleOpenCreate} className="gap-2 shadow-lg shadow-primary/25 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 h-11 px-6 rounded-full">
                     <Plus className="h-5 w-5" />
-                    Nueva Obra
+                    Nueva obra
                   </Button>
                 ) : activeTab === 'entrevistas' ? (
                   <Button onClick={handleOpenCreateInterview} className="gap-2 shadow-lg shadow-primary/25 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 h-11 px-6 rounded-full">
                     <Plus className="h-5 w-5" />
-                    Nueva Entrevista
+                    Nueva entrevista
                   </Button>
                 ) : activeTab === 'articulos' ? (
                   <Button onClick={handleOpenCreateArticle} className="gap-2 shadow-lg shadow-primary/25 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 h-11 px-6 rounded-full">
                     <Plus className="h-5 w-5" />
-                    Nuevo Artículo
+                    Nuevo artículo
                   </Button>
                 ) : activeTab === 'galeria' ? (
                   <Button onClick={handleOpenCreateGallery} className="gap-2 shadow-lg shadow-primary/25 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 h-11 px-6 rounded-full">
                     <Plus className="h-5 w-5" />
-                    Nueva Foto
+                    Nueva foto
                   </Button>
                 ) : null}
               </div>
@@ -637,7 +637,7 @@ export default function Autor() {
 
             <TabsContent value="articulos" className="mt-0 focus-visible:outline-none">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <h2 className="text-2xl font-display font-bold">Artículos y Publicaciones</h2>
+                <h2 className="text-2xl font-display font-bold">Artículos y publicaciones</h2>
                 
                 <div className="flex bg-muted/40 p-1 rounded-xl">
                   <button 
@@ -708,7 +708,7 @@ export default function Autor() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className="text-muted-foreground hover:text-foreground gap-1.5 px-3 h-9"
+                          className="text-muted-foreground hover:text-white hover:bg-primary/90 transition-colors gap-1.5 px-3 h-9"
                           onClick={() => handleOpenEditArticle(article)}
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -878,7 +878,7 @@ export default function Autor() {
 
       {/* Modal for viewing message */}
       <Dialog open={!!selectedMessage} onOpenChange={(open) => !open && setSelectedMessage(null)}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
           {selectedMessage && (
             <>
               <DialogHeader className="px-8 pt-8 pb-6 bg-muted/10 border-b border-border/50 shrink-0">
@@ -920,7 +920,7 @@ export default function Autor() {
       </Dialog>
 
       <Dialog open={formOpen} onOpenChange={(open) => !open && handleFormCancel()}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
           <DialogHeader className="px-8 pt-8 pb-5 bg-muted/10 border-b border-border/50 shrink-0">
             <DialogTitle className="text-3xl font-display text-foreground flex items-center gap-4">
               {editingBook ? (
@@ -952,7 +952,7 @@ export default function Autor() {
 
       {/* Modal for Interviews */}
       <Dialog open={interviewFormOpen} onOpenChange={(open) => !open && handleInterviewFormCancel()}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
           <DialogHeader className="px-8 pt-8 pb-5 bg-muted/10 border-b border-border/50 shrink-0">
             <DialogTitle className="text-3xl font-display text-foreground flex items-center gap-4">
               {editingInterview ? (
@@ -960,7 +960,7 @@ export default function Autor() {
                   <div className="p-2.5 bg-primary/10 rounded-xl">
                     <Pencil className="h-6 w-6 text-primary" />
                   </div>
-                  Editar Entrevista
+                  Editar entrevista
                 </>
               ) : (
                 <>
@@ -983,15 +983,15 @@ export default function Autor() {
       </Dialog>
       {/* Modal for Articles */}
       <Dialog open={articleFormOpen} onOpenChange={(open) => !open && handleArticleFormCancel()}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-md p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
           <DialogHeader className="px-8 pt-8 pb-5 bg-muted/10 border-b border-border/50 shrink-0">
-            <DialogTitle className="text-3xl font-display text-foreground flex items-center gap-4">
+            <DialogTitle className="text-2xl font-display text-foreground flex items-center gap-4">
               {editingArticle ? (
                 <>
                   <div className="p-2.5 bg-primary/10 rounded-xl">
-                    <Pencil className="h-6 w-6 text-primary" />
+                    <Pencil className="h-5 w-5 text-primary" />
                   </div>
-                  Editar Artículo
+                  Editar artículo
                 </>
               ) : (
                 <>
@@ -1014,7 +1014,26 @@ export default function Autor() {
       </Dialog>
       {/* Modal for Gallery */}
       <Dialog open={galleryFormOpen} onOpenChange={(open) => !open && handleGalleryFormCancel()}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-5xl p-0 overflow-hidden border-border shadow-2xl bg-background sm:rounded-[2rem] flex flex-col max-h-[90vh]">
+          <DialogHeader className="px-8 pt-8 pb-5 bg-muted/10 border-b border-border/50 shrink-0">
+            <DialogTitle className="text-3xl font-display text-foreground flex items-center gap-4">
+              {editingGalleryPhoto ? (
+                <>
+                  <div className="p-2.5 bg-primary/10 rounded-xl">
+                    <Pencil className="h-6 w-6 text-primary" />
+                  </div>
+                  Editar foto de galería
+                </>
+              ) : (
+                <>
+                  <div className="p-2.5 bg-primary/10 rounded-xl">
+                    <ImageIcon className="h-6 w-6 text-primary" />
+                  </div>
+                  Nueva foto de galería
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
           <div className="flex-1 overflow-hidden flex flex-col">
             <GalleryForm
               photo={editingGalleryPhoto}

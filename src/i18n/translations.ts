@@ -66,7 +66,7 @@ export const translations = {
       notDigitized: 'No digitalizado',
       notDigitizedDesc: 'Este libro no está disponible en formato digital por ser una edición antigua.',
       buyVes: 'Comprar en VES/Zelle/Binance',
-      buyUsd: 'Comprar en USD/EUR',
+      buyUsd: 'Comprar en Amazon (USD/EUR)',
       close: 'Cerrar',
       year: 'Año',
       relatedImages: 'Imágenes relacionadas',
