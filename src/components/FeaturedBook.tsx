@@ -11,10 +11,23 @@ export function FeaturedBook() {
   const { books } = useBooks();
 
   // Find all books that have "diaspora" or "diáspora" in their title
-  const diasporaBooks = books.filter(b => 
-    b.title.es.toLowerCase().includes('diaspora') || 
-    b.title.es.toLowerCase().includes('diáspora')
-  );
+  // and sort them to prioritize the Spanish edition first
+  const diasporaBooks = [...books]
+    .filter(b => 
+      b.title.es.toLowerCase().includes('diaspora') || 
+      b.title.es.toLowerCase().includes('diáspora')
+    )
+    .sort((a, b) => {
+      const isSpanish = (book: Book) => {
+        const langWord = (book.title.es || '').split(' ').pop()?.replace(/\.$/, '')?.toLowerCase();
+        return langWord === 'español' || book.id.includes('-es');
+      };
+      const aIsEs = isSpanish(a);
+      const bIsEs = isSpanish(b);
+      if (aIsEs && !bIsEs) return -1;
+      if (!aIsEs && bIsEs) return 1;
+      return 0;
+    });
 
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [purchaseBook, setPurchaseBook] = useState<Book | null>(null);

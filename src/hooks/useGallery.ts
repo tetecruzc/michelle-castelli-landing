@@ -29,7 +29,7 @@ export function useGallery() {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('gallery')
+        .from('gallery' as any)
         .select('*')
         .order('category_id', { ascending: true })
         .order('original_id', { ascending: true });
@@ -41,7 +41,7 @@ export function useGallery() {
 
       // Convert image paths to public URLs
       const photosWithUrls = await Promise.all(
-        (data || []).map(async (photo) => {
+        (data || []).map(async (photo: any) => {
           const { data: urlData } = supabase.storage
             .from('gallery-images')
             .getPublicUrl(photo.image_url);
@@ -53,7 +53,7 @@ export function useGallery() {
         })
       );
 
-      setPhotos(photosWithUrls);
+      setPhotos(photosWithUrls as GalleryPhoto[]);
     } catch (error) {
       console.error('Error in fetchPhotos:', error);
     } finally {
@@ -62,4 +62,15 @@ export function useGallery() {
   };
 
   return { photos, isLoading, refetch: fetchPhotos };
+}
+
+export async function updateGalleryOrder(photos: { id: string; original_id: number }[]): Promise<void> {
+  const client = supabase;
+  if (!client) return;
+  
+  await Promise.all(
+    photos.map(p => 
+      client.from('gallery' as any).update({ original_id: p.original_id }).eq('id', p.id)
+    )
+  );
 }

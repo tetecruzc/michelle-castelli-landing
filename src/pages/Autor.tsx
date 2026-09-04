@@ -21,7 +21,7 @@ import type { Book } from '@/data/books';
 import type { Interview } from '@/data/interviews';
 import { useArticles } from '@/hooks/useArticles';
 import { toggleFeaturedBook, updateBooksOrder, useBooks } from '@/hooks/useBooks';
-import { useGallery, type GalleryPhoto } from '@/hooks/useGallery';
+import { useGallery, updateGalleryOrder, type GalleryPhoto } from '@/hooks/useGallery';
 import { useInterviews } from '@/hooks/useInterviews';
 import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/lib/supabase';
@@ -105,6 +105,61 @@ function SortableBookCard({ book, onEdit, onToggleFeatured }: { book: Book; onEd
   );
 }
 
+function SortableGalleryCard({ photo, onEdit }: { photo: GalleryPhoto; onEdit: (photo: GalleryPhoto) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: photo.id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="break-inside-avoid">
+      <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-border/40 bg-card/60 backdrop-blur-md rounded-xl flex flex-col hover:-translate-y-1">
+        <div 
+          className="absolute top-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/90 backdrop-blur-sm rounded-md cursor-grab active:cursor-grabbing text-white transition-colors"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={18} />
+        </div>
+        <div className="relative">
+          <img 
+            src={photo.image_url} 
+            alt="Gallery item" 
+            className="w-full h-auto object-cover"
+          />
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+             <Button 
+               variant="secondary"
+               size="sm"
+               className="gap-2 shadow-xl"
+               onClick={(e) => { e.stopPropagation(); onEdit(photo); }}
+             >
+               <Pencil className="h-4 w-4" />
+               Editar Foto
+             </Button>
+          </div>
+        </div>
+        <div className="p-4 border-t border-border/40">
+           <p className="text-sm text-foreground line-clamp-3 leading-relaxed">
+             {photo.text}
+           </p>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 const getYoutubeVideoId = (url: string) => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -148,6 +203,7 @@ export default function Autor() {
 
   const [orderedInterviews, setOrderedInterviews] = useState<Interview[]>([]);
   const [orderedBooks, setOrderedBooks] = useState<Book[]>([]);
+  const [orderedGallery, setOrderedGallery] = useState<GalleryPhoto[]>([]);
   
   useEffect(() => {
     setOrderedInterviews(interviews);
@@ -156,6 +212,10 @@ export default function Autor() {
   useEffect(() => {
     setOrderedBooks(books);
   }, [books]);
+
+  useEffect(() => {
+    setOrderedGallery(galleryPhotos);
+  }, [galleryPhotos]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -173,6 +233,23 @@ export default function Autor() {
         // Update database in background
         const updates = newArray.map((b, idx) => ({ id: b.id, position: idx }));
         updateBooksOrder(updates).catch(console.error);
+        
+        return newArray;
+      });
+    }
+  };
+
+  const handleDragEndGallery = async (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setOrderedGallery((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        const newArray = arrayMove(items, oldIndex, newIndex);
+        
+        // Update database in background
+        const updates = newArray.map((p, idx) => ({ id: p.id, original_id: idx }));
+        updateGalleryOrder(updates).catch(console.error);
         
         return newArray;
       });
@@ -741,7 +818,7 @@ export default function Autor() {
 
             <TabsContent value="galeria" className="mt-0 focus-visible:outline-none">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <h2 className="text-2xl font-display font-bold">Gestión de Galería</h2>
+                <h2 className="text-2xl font-display font-bold">Gestión de galería</h2>
                 
                 <div className="flex bg-muted/40 p-1 rounded-xl overflow-x-auto max-w-full">
                   {[
@@ -768,7 +845,7 @@ export default function Autor() {
                   <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
                   <p className="text-muted-foreground animate-pulse">Cargando galería...</p>
                 </div>
-              ) : galleryPhotos.filter(p => p.category_id === galleryCategoryFilter).length === 0 ? (
+              ) : orderedGallery.filter(p => p.category_id === galleryCategoryFilter).length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 px-4 text-center animate-fade-in-up">
                   <div className="w-20 h-20 bg-background border border-border/50 rounded-2xl flex items-center justify-center mb-8 shadow-sm group hover:border-primary/30 transition-colors duration-300">
                     <FileText className="h-8 w-8 text-primary/70 group-hover:text-primary transition-colors duration-300" strokeWidth={1.5} />
@@ -783,35 +860,15 @@ export default function Autor() {
                   </Button>
                 </div>
               ) : (
-                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
-                  {galleryPhotos.filter(p => p.category_id === galleryCategoryFilter).map((photo) => (
-                    <Card key={photo.id} className="break-inside-avoid relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-border/40 bg-card/60 backdrop-blur-md rounded-xl flex flex-col hover:-translate-y-1">
-                      <div className="relative">
-                        <img 
-                          src={photo.image_url} 
-                          alt="Gallery item" 
-                          className="w-full h-auto object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                           <Button 
-                             variant="secondary"
-                             size="sm"
-                             className="gap-2 shadow-xl"
-                             onClick={() => handleOpenEditGallery(photo)}
-                           >
-                             <Pencil className="h-4 w-4" />
-                             Editar Foto
-                           </Button>
-                        </div>
-                      </div>
-                      <div className="p-4 border-t border-border/40">
-                         <p className="text-sm text-foreground line-clamp-3 leading-relaxed">
-                           {photo.text}
-                         </p>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndGallery}>
+                  <SortableContext items={orderedGallery.filter(p => p.category_id === galleryCategoryFilter).map(p => p.id)} strategy={rectSortingStrategy}>
+                    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
+                      {orderedGallery.filter(p => p.category_id === galleryCategoryFilter).map((photo) => (
+                        <SortableGalleryCard key={photo.id} photo={photo} onEdit={handleOpenEditGallery} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </TabsContent>
 
