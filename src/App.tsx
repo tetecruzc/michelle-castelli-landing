@@ -1,19 +1,18 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LanguageProvider } from "@/i18n/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import Obras from "./pages/Obras";
+import { LanguageProvider } from "@/i18n/LanguageContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Articulos from "./pages/Articulos";
 import Autor from "./pages/Autor";
 import Entrevistas from "./pages/Entrevistas";
-import Articulos from "./pages/Articulos";
 import Galeria from "./pages/Galeria";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Obras from "./pages/Obras";
 
-import { WelcomeModal } from "@/components/WelcomeModal";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +23,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <WelcomeModal />
+          {/* <WelcomeModal /> */}
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
